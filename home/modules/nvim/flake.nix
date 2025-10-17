@@ -124,6 +124,11 @@
           go-tools
           gccgo
         ];
+        python = with pkgs; [
+          basedpyright
+          python313Packages.flake8
+          python313Packages.black
+        ];
         # and easily check if they are included in lua
         format = with pkgs; [
         ];
@@ -369,13 +374,16 @@
           # and ALSO debug.go and debug.default due to our extraCats in categoryDefinitions.
           # go = true; # <- disabled but you could enable it with override or module on install
 
+          # Languages
+          python = true;
+
           # this does not have an associated category of plugins, 
           # but lua can still check for it
           lspDebugMode = false;
           # you could also pass something else:
           # see :help nixCats
           themer = true;
-          colorscheme = "catppuccin-mocha";
+          colorscheme = "tokyonight";
         };
         extra = {
           # to keep the categories table from being filled with non category things that you want to pass

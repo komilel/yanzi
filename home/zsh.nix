@@ -1,19 +1,22 @@
-{ config, pkgs, ... }: {
+{ config, lib, pkgs, ... }: {
   programs.zsh = {
     enable = true;
-    
+
     shellAliases =
       let
         flakeDir = "~/yanzi";
       in {
-        rb = "sudo nixos-rebuild switch --flake ${flakeDir}";
+        rbd = "sudo nixos-rebuild switch --flake ${flakeDir}";
+        rbdt = "sudo nixos-rebuild test --flake ${flakeDir}";
 
         c = "clear";
         sn = "shutdown now";
-        rbt = "reboot";
+        rb = "reboot";
         lc = "lsd";
         llc = "lsd -l";
-        lcc = "lsd -c";
+        lcc = "lsd -la";
+
+        ts = "tmux-sessionizer";
       };
 
     enableCompletion = true;
@@ -52,6 +55,11 @@
 
   # Integrating fzf
   programs.fzf = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  programs.direnv = {
     enable = true;
     enableZshIntegration = true;
   };

@@ -2,9 +2,12 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ self, config, inputs, pkgs, system, ... }:
-
-{
+{ self, config, inputs, pkgs, lib, system, ... }:
+let
+  sddm-theme = inputs.silentSDDM.packages.${system}.default.override {
+      theme = "rei";
+  };
+in {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
@@ -13,6 +16,7 @@
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.supportedFilesystems = [ "ntfs" ];
 
   networking.hostName = "HyprNix"; # Define your hostname.
   # Pick only one of the below networking options.
@@ -48,6 +52,7 @@
     noto-fonts-cjk-serif
   ];
 
+  qt.enable = true;
 
   # Enable CUPS to print documents.
   services.printing = {
@@ -64,20 +69,9 @@
   services.system-config-printer.enable = true;
 
   # Enable sound.
-  # hardware.pulseaudio.enable = true;
-  # OR
   services.pipewire = {
     enable = true;
     pulse.enable = true;
-  };
-
-  hardware.bluetooth = {
-    enable = true;
-    settings = {
-      General = {
-        Experimental = true;
-      };
-    };
   };
 
   services.blueman.enable = true;
@@ -91,6 +85,36 @@
   # Thumbnail support for images
   services.tumbler.enable = true;
 
+  services.displayManager.sddm = {
+    package = pkgs.kdePackages.sddm;
+    enable = true;
+    wayland.enable = true;
+    theme = sddm-theme.pname;
+    extraPackages = sddm-theme.propagatedBuildInputs;
+    settings = {
+      # required for styling the virtual keyboard
+      General = {
+        GreeterEnvironment = "QML2_IMPORT_PATH=${sddm-theme}/share/sddm/themes/${sddm-theme.pname}/components/,QT_IM_MODULE=qtvirtualkeyboard";
+        InputMethod = "qtvirtualkeyboard";
+      };
+    };
+  };
+
+  hardware.bluetooth = {
+    enable = true;
+    settings = {
+      General = {
+        experimental = true;
+      };
+    };
+  };
+
+  # Gaming
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.komi = {
     isNormalUser = true;
@@ -101,15 +125,19 @@
   programs = {
     firefox.enable = true;
 
-    hyprland.enable = true;
+    hyprland = {
+      enable = true;
+      package = inputs.hyprland.packages.${system}.hyprland;
+      portalPackage = inputs.hyprland.packages.${system}.xdg-desktop-portal-hyprland;
+    };
 
     zsh.enable = true;
 
     seahorse.enable = true;
 
     thunar = {
-     enable = true;
-     plugins = with pkgs.xfce; [ thunar-archive-plugin thunar-volman ];
+      enable = true;
+      plugins = with pkgs.xfce; [ thunar-archive-plugin thunar-volman ];
     };
 
     steam = {
@@ -119,8 +147,35 @@
 
     gamemode.enable = true;
 
+    direnv.enable = true;
+
     # Tmp
     adb.enable = true;
+    
+    # For ciscoPacketTracer8
+    firejail = {
+      enable = true;
+      wrappedBinaries = {
+        packettracer8 = {
+          executable = lib.getExe pkgs.ciscoPacketTracer8;
+
+          # Will still want a .desktop entry as the package is not directly added
+          desktop = "${pkgs.ciscoPacketTracer8}/share/applications/cisco-pt8.desktop.desktop";
+
+          extraArgs = [
+            # This should make it run in isolated netns, preventing internet access
+            "--net=none"
+
+            # firejail is only needed for network isolation so no futher profile is needed
+            "--noprofile"
+
+            # Packet tracer doesn't play nice with dark QT themes so this
+            # should unset the theme. Uncomment if you have this issue.
+            # ''--env=QT_STYLE_OVERRIDE=""''
+          ];
+        };
+      };
+    };
   };
 
   nixpkgs.config = {
@@ -159,14 +214,14 @@
     brightnessctl
     pavucontrol
     bibata-cursors
-    libreoffice-fresh
     qview
     btop
+    nvtopPackages.full
     rocmPackages.rocm-smi
     spotify
     pulseaudio
     yazi
-    rofi-wayland
+    rofi
     lsd
     networkmanagerapplet
     hyprshot
@@ -174,21 +229,57 @@
     unzip
     qbittorrent
 
+    # Drawing
+    inkscape-with-extensions
+
+    # Dev
+    devenv
+
     # Gaming
     atlauncher
+    prismlauncher
 
     colloid-gtk-theme
     colloid-icon-theme
+    adwaita-icon-theme
 
-    # Tmp packages - School
+    google-chrome
+
+    # Office packages
+    libreoffice-fresh
+    hyphen
+    hyphenDicts.ru_RU
+
+    # === Tmp packages - School ===
+
+    # Prolog language
     swi-prolog
+
+    # Android java dev
     android-studio
+    jetbrains.idea-community-bin
+
+    # Gis
+    qgis
+
+    # Cisco packet tracer
+    ciscoPacketTracer8
+
+    # Plantuml
+    plantuml
+
+    # === Flakes ===
 
     inputs.zen-browser.packages.${system}.default
     inputs.nixCats.packages.${system}.nixCats
+    sddm-theme
+    sddm-theme.test
 
-    (import ./scripts/wallpaper.nix { inherit config pkgs; })
-  ];
+    inputs.oglgl.packages.${system}.default
+  ] ++
+  # Import all scripts from a folder and
+  # Add them as packages
+  builtins.map (scr: import scr {inherit pkgs config; }) (pkgs.lib.filesystem.listFilesRecursive ./scripts);
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
@@ -196,6 +287,12 @@
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       auto-optimise-store = true;
+
+      substituters = ["https://hyprland.cachix.org"];
+      trusted-substituters = ["https://hyprland.cachix.org"];
+      trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
+
+      trusted-users = [ "root" "komi" ];
     };
 
     gc = {

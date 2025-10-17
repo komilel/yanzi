@@ -56,13 +56,16 @@
     };
 
     gestures = {
-      workspace_swipe = "on";
       workspace_swipe_cancel_ratio = 0.15;
       workspace_swipe_distance = 500;
       workspace_swipe_forever = true;
       workspace_swipe_use_r = true;
       workspace_swipe_create_new = true;
     };
+
+    gesture = [
+      "3, horizontal, workspace"
+    ];
 
     input = {
       kb_layout = "us,ru";
@@ -138,6 +141,7 @@
     misc = {
       disable_hyprland_logo = true;
       force_default_wallpaper = 0;
+      initial_workspace_tracking = 1;
     };
 
     xwayland = {
@@ -272,7 +276,7 @@
       "$Mod, 9, split:workspace, 9"
       "$Mod, 0, split:workspace, 10"
 
-      # Move active window to a workspace with mainMod + SHIFT + [0-9]
+      # Move active window to a workspace with mainMod + SHIFT + [0:9]
       "$Mod SHIFT, 1, split:movetoworkspacesilent, 1"
       "$Mod SHIFT, 2, split:movetoworkspacesilent, 2"
       "$Mod SHIFT, 3, split:movetoworkspacesilent, 3"
@@ -294,6 +298,7 @@
 
       # Screenshot
       "$Mod SHIFT, S, exec, hyprshot -m region --clipboard-only"
+      "$Mod SHIFT, D, exec, hyprshot -m region --clipboard-only --freeze"
       "$Mod SHIFT, X, exec, hyprshot -m output --clipboard-only"
       "$Mod SHIFT, C, exec, hyprshot -m window --clipboard-only"
     ];
@@ -319,9 +324,22 @@
     bindm = [
       "$Mod, mouse:272, movewindow"
       "$Mod, mouse:273, resizewindow"
+      "$Mod, ALT_L, resizewindow" # For touchpad resizing
+    ];
+
+    bindl = [
+      # Lid switch
+      ", switch:on:Lid Switch, exec, systemctl suspend"
+      ", switch:off:Lid Switch, exec, hyprctl dispatch dpms on"
     ];
 
     plugin = {
+      # split-monitor-workspaces = {
+      #   count = 5;
+      #   keep_focused = 0;
+      #   enable_notifications = 0;
+      #   enable_persistent_workspaces = 1;
+      # };
       hyprsplit = {
         num_workspaces = 5;
       };

@@ -19,6 +19,9 @@ require("myLuaConf.plugins")
 
 require("myLuaConf.LSPs")
 
+-- Tokyonight
+-- require("myLuaConf.colorscheme")
+
 -- NOTE: we even ask nixCats if we included our debug stuff in this setup! (we didnt)
 -- But we have a good base setup here as an example anyway!
 if nixCats('debug') then

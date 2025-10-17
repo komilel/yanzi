@@ -1,4 +1,4 @@
-{ config, ... }: {
+{ config, pkgs, inputs, system, ... }: {
   imports = [
     ./hyprland/hyprland.nix
     ./hyprland/hyprlock.nix
@@ -12,5 +12,6 @@
     ./rofi.nix
     ./dunst/dunst.nix
     ./git.nix
+    ./tmux.nix
   ];
 }
