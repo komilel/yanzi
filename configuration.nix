@@ -131,6 +131,10 @@ in {
       portalPackage = inputs.hyprland.packages.${system}.xdg-desktop-portal-hyprland;
     };
 
+    niri = {
+      enable = true;
+    };
+
     zsh.enable = true;
 
     seahorse.enable = true;
@@ -228,6 +232,8 @@ in {
     file-roller
     unzip
     qbittorrent
+    qalculate-gtk
+    powertop
 
     # Drawing
     inkscape-with-extensions
@@ -236,9 +242,9 @@ in {
     devenv
 
     # Gaming
-    atlauncher
     prismlauncher
 
+    # Themes
     colloid-gtk-theme
     colloid-icon-theme
     adwaita-icon-theme
@@ -249,6 +255,8 @@ in {
     libreoffice-fresh
     hyphen
     hyphenDicts.ru_RU
+    hunspell
+    hunspellDicts.ru_RU
 
     # === Tmp packages - School ===
 
@@ -326,19 +334,28 @@ in {
       CPU_SCALING_GOVERNOR_ON_AC = "performance";
       CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
 
-      # CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
-      # CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+      CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+      CPU_ENERGY_PERF_POLICY_ON_BAT = "balance_power";
 
-      CPU_SCALING_MIN_FREQ_ON_AC=400000;
-      CPU_SCALING_MAX_FREQ_ON_AC=4785000;
-      CPU_SCALING_MIN_FREQ_ON_BAT=400000;
-      CPU_SCALING_MAX_FREQ_ON_BAT=3285000;
+      CPU_BOOST_ON_AC = 1;
+      CPU_BOOST_ON_BAT = 0;
+
+      CPU_SCALING_MIN_FREQ_ON_AC = 400000;
+      CPU_SCALING_MAX_FREQ_ON_AC = 4785000;
+      CPU_SCALING_MIN_FREQ_ON_BAT = 400000;
+      CPU_SCALING_MAX_FREQ_ON_BAT = 3285000;
 
       # Optional helps save long term battery health
-      START_CHARGE_THRESH_BAT0 = 40; # 40 and below it starts to charge
-      STOP_CHARGE_THRESH_BAT0 = 80; # 80 and above it stops charging
+      START_CHARGE_THRESH_BAT0 = 40;
+      STOP_CHARGE_THRESH_BAT0 = 80;
+
+      USB_AUTOSUSPEND = 0;
     };
   };
+
+  services.thermald.enable = true;
+
+  services.system76-scheduler.settings.cfsProfiles.enable = true;
 
   services.keyd = {
     enable = true;
@@ -353,6 +370,8 @@ in {
       };
     };
   };
+
+  powerManagement.enable = true;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
@@ -386,4 +405,3 @@ in {
   system.stateVersion = "24.11"; # Did you read the comment?
 
 }
-
