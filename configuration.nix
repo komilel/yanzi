@@ -1,6 +1,3 @@
-# Edit this configuration file to define what should be installed on
-# your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
 { self, config, inputs, pkgs, lib, system, ... }:
 let
@@ -9,7 +6,7 @@ let
   };
 in {
   imports =
-    [ # Include the results of the hardware scan.
+    [
       ./hardware-configuration.nix
     ];
 
@@ -18,10 +15,9 @@ in {
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "ntfs" ];
 
-  networking.hostName = "HyprNix"; # Define your hostname.
-  # Pick only one of the below networking options.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-  networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
+  networking.hostName = "Niko";
+
+  networking.networkmanager.enable = true;
 
   # Set your time zone.
   time.timeZone = "Asia/Yekaterinburg";
@@ -43,11 +39,11 @@ in {
     nerd-fonts.jetbrains-mono
     nerd-fonts.symbols-only
     corefonts
-    vistafonts
+    vista-fonts
     font-awesome
     noto-fonts 
-    noto-fonts-emoji
-    noto-fonts-extra
+    noto-fonts-color-emoji
+    noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-cjk-serif
   ];
@@ -82,6 +78,8 @@ in {
   # Mount, trash, and other functionalities
   services.gvfs.enable = true;
 
+  services.samba.enable = true;
+
   # Thumbnail support for images
   services.tumbler.enable = true;
 
@@ -98,6 +96,10 @@ in {
         InputMethod = "qtvirtualkeyboard";
       };
     };
+  };
+
+  security.polkit = {
+    enable = true;
   };
 
   hardware.bluetooth = {
@@ -125,12 +127,6 @@ in {
   programs = {
     firefox.enable = true;
 
-    hyprland = {
-      enable = true;
-      package = inputs.hyprland.packages.${system}.hyprland;
-      portalPackage = inputs.hyprland.packages.${system}.xdg-desktop-portal-hyprland;
-    };
-
     niri = {
       enable = true;
     };
@@ -155,39 +151,87 @@ in {
 
     # Tmp
     adb.enable = true;
+
+    vscode = {
+      enable = true;
+      extensions = with pkgs.vscode-extensions; [
+        # General extensions
+        catppuccin.catppuccin-vsc
+        catppuccin.catppuccin-vsc-icons
+        vscodevim.vim
+        mkhl.direnv
+
+        # == Languages ==
+        # Python
+        ms-python.debugpy
+        ms-python.python
+        ms-python.pylint
+        ms-toolsai.jupyter
+        ms-toolsai.jupyter-renderers
+        ms-toolsai.vscode-jupyter-cell-tags
+        ms-toolsai.jupyter-keymap
+
+        # C/Cpp
+        hars.cppsnippets
+        ms-vscode.cpptools
+
+        # Nix
+        bbenoist.nix
+        kamadorueda.alejandra
+      ];
+    };
     
     # For ciscoPacketTracer8
-    firejail = {
-      enable = true;
-      wrappedBinaries = {
-        packettracer8 = {
-          executable = lib.getExe pkgs.ciscoPacketTracer8;
-
-          # Will still want a .desktop entry as the package is not directly added
-          desktop = "${pkgs.ciscoPacketTracer8}/share/applications/cisco-pt8.desktop.desktop";
-
-          extraArgs = [
-            # This should make it run in isolated netns, preventing internet access
-            "--net=none"
-
-            # firejail is only needed for network isolation so no futher profile is needed
-            "--noprofile"
-
-            # Packet tracer doesn't play nice with dark QT themes so this
-            # should unset the theme. Uncomment if you have this issue.
-            # ''--env=QT_STYLE_OVERRIDE=""''
-          ];
-        };
-      };
-    };
+    # firejail = {
+    #   enable = true;
+    #   wrappedBinaries = {
+    #     packettracer8 = {
+    #       executable = lib.getExe pkgs.ciscoPacketTracer8;
+    #
+    #       # Will still want a .desktop entry as the package is not directly added
+    #       desktop = "${pkgs.ciscoPacketTracer8}/share/applications/cisco-pt8.desktop.desktop";
+    #
+    #       extraArgs = [
+    #         # This should make it run in isolated netns, preventing internet access
+    #         "--net=none"
+    #
+    #         # firejail is only needed for network isolation so no futher profile is needed
+    #         "--noprofile"
+    #
+    #         # Packet tracer doesn't play nice with dark QT themes so this
+    #         # should unset the theme. Uncomment if you have this issue.
+    #         # ''--env=QT_STYLE_OVERRIDE=""''
+    #       ];
+    #     };
+    #   };
+    # };
   };
 
   nixpkgs.config = {
     allowUnfree = true;
   };
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
+  xdg.portal = {
+    enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-gtk
+      xdg-desktop-portal-gnome
+    ];
+    config = {
+      common = {
+        default = [ "gtk" ];
+      };
+      niri = {
+        default = [
+          "gtk"
+          "gnome"
+        ];
+        "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
+        "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
+      };
+    };
+  };
+
   environment.systemPackages = with pkgs; [
     vim
     wget
@@ -212,15 +256,13 @@ in {
     wl-clipboard
     busybox
     dunst
-    hyprpicker
-    hyprland-per-window-layout
     git
     brightnessctl
     pavucontrol
     bibata-cursors
     qview
     btop
-    nvtopPackages.full
+    nvtopPackages.amd
     rocmPackages.rocm-smi
     spotify
     pulseaudio
@@ -228,21 +270,45 @@ in {
     rofi
     lsd
     networkmanagerapplet
-    hyprshot
     file-roller
     unzip
     qbittorrent
     qalculate-gtk
     powertop
+    fastfetch
+
+    # Networking
+    samba
+    cifs-utils
+
+    # Packages for Niri
+    xwayland-satellite
+
+    # Packages that I need from hypr*
+    hyprpicker
 
     # Drawing
     inkscape-with-extensions
+    gimp
+
+    # Editing
+    shotcut
+    gnome-text-editor
+
+    # Utilities
+    wev
+    obs-studio
+    gparted
+    exfatprogs
+    ghostscript
+    sshfs
 
     # Dev
     devenv
 
     # Gaming
     prismlauncher
+    lutris
 
     # Themes
     colloid-gtk-theme
@@ -263,15 +329,12 @@ in {
     # Prolog language
     swi-prolog
 
-    # Android java dev
+    # Android & Java dev
     android-studio
     jetbrains.idea-community-bin
 
     # Gis
     qgis
-
-    # Cisco packet tracer
-    ciscoPacketTracer8
 
     # Plantuml
     plantuml
@@ -285,20 +348,21 @@ in {
 
     inputs.oglgl.packages.${system}.default
   ] ++
-  # Import all scripts from a folder and
+  # Import all scripts from a directory and
   # Add them as packages
   builtins.map (scr: import scr {inherit pkgs config; }) (pkgs.lib.filesystem.listFilesRecursive ./scripts);
-
-  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+  
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+    XDG_CURRENT_DESKTOP = "niri";
+    XDG_SESSION_TYPE = "wayland";
+    XDG_SESSION_DESKTOP = "niri";
+  };
 
   nix = {
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       auto-optimise-store = true;
-
-      substituters = ["https://hyprland.cachix.org"];
-      trusted-substituters = ["https://hyprland.cachix.org"];
-      trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
 
       trusted-users = [ "root" "komi" ];
     };
@@ -306,7 +370,7 @@ in {
     gc = {
       automatic = true;
       dates = "weekly";
-      options = "--delete-older-than 10d";
+      options = "--delete-older-than 14d";
     };
   };
 
@@ -317,8 +381,6 @@ in {
   #   enable = true;
   #   enableSSHSupport = true;
   # };
-
-  # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
   services.openssh = {
@@ -371,6 +433,11 @@ in {
     };
   };
 
+  # Dev
+  services.postgresql = {
+    enable = true;
+  };
+
   powerManagement.enable = true;
 
   # Open ports in the firewall.
@@ -403,5 +470,4 @@ in {
   #
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
   system.stateVersion = "24.11"; # Did you read the comment?
-
 }

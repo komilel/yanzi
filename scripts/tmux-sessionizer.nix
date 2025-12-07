@@ -18,9 +18,6 @@ in pkgs.writeShellApplication {
     # Don't exit on error
     set +e
 
-    # Launch nvim in current dir (alias)
-    vim_cmd="v ."
-
     if [[ $# -eq 1 ]]; then
       selected=$1
     else
@@ -35,7 +32,7 @@ in pkgs.writeShellApplication {
     tmux_running=$(pgrep tmux)
 
     if [[ -z $tmux_running ]] || ! tmux has-session -t="$selected_name" 2>/dev/null; then
-      tmux new-session -ds "$selected_name" -c "$selected" "$vim_cmd"
+      tmux new-session -ds "$selected_name" -c "$selected"
       tmux new-window -c "$selected"
       tmux select-window -t 1
     fi

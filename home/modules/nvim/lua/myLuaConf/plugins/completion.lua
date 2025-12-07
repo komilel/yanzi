@@ -80,6 +80,7 @@ return {
         },
         completion = {
           menu = {
+            border = "rounded",
             draw = {
               treesitter = { 'lsp' },
               components = {
@@ -96,6 +97,9 @@ return {
           },
           documentation = {
             auto_show = true,
+            window = {
+              border = "rounded",
+            },
           },
         },
         snippets = {

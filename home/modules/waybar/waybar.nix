@@ -19,7 +19,7 @@
 
         modules-left = [
           "custom/launcher"
-          "hyprland/workspaces"
+          "niri/workspaces"
           "mpris"
         ];
 
@@ -29,7 +29,7 @@
 
         modules-right = [
           "group/stats"
-          "hyprland/language"
+          "niri/language"
           "tray"
         ];
       };

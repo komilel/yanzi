@@ -56,11 +56,39 @@ vim.wo.relativenumber = true
 vim.o.updatetime = 250
 vim.o.timeoutlen = 300
 
+vim.opt.swapfile = false
+
+vim.opt.guicursor = "n-v-i-c:block-Cursor"
+
+vim.opt.cursorline = true
+
 -- Set completeopt to have a better completion experience
 vim.o.completeopt = 'menu,preview,noselect'
 
 -- NOTE: You should make sure your terminal supports this
 vim.o.termguicolors = true
+
+-- Configure diagnostic messages
+vim.diagnostic.config(
+  {
+    underline = true,
+    virtual_text = {
+      spacing = 2,
+      prefix = "●",
+    },
+    float = { border = "rounded" },
+    update_in_insert = false,
+    severity_sort = true,
+    signs = {
+      text = {
+        [vim.diagnostic.severity.ERROR] = " ",
+        [vim.diagnostic.severity.WARN] = " ",
+        [vim.diagnostic.severity.HINT] = " ",
+        [vim.diagnostic.severity.INFO] = " ",
+      },
+    },
+  }
+)
 
 -- [[ Disable auto comment on enter ]]
 -- See :help formatoptions
@@ -99,12 +127,6 @@ vim.keymap.set("n", "<leader><leader>[", "<cmd>bprev<CR>", { desc = 'Previous bu
 vim.keymap.set("n", "<leader><leader>]", "<cmd>bnext<CR>", { desc = 'Next buffer' })
 vim.keymap.set("n", "<leader><leader>l", "<cmd>b#<CR>", { desc = 'Last buffer' })
 vim.keymap.set("n", "<leader><leader>d", "<cmd>bdelete<CR>", { desc = 'delete buffer' })
-
--- see help sticky keys on windows
-vim.cmd([[command! W w]])
-vim.cmd([[command! Wq wq]])
-vim.cmd([[command! WQ wq]])
-vim.cmd([[command! Q q]])
 
 -- Remap for dealing with word wrap
 vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })

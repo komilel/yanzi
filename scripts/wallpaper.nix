@@ -18,7 +18,7 @@ in pkgs.writeShellApplication {
     #    \_/\_/ \__,_|_|_| .__/ \__,_| .__/ \___|_|(_)___/_| |_|
     #                    |_|         |_|                        
     #
-    # Wallpaper script for Hyprland with Wallust colors
+    # Wallpaper script for Niri with Wallust colors
 
     # Caching file for current wallpaper
     cache_wallpaper="${Home}/.cache/current_wallpaper"
@@ -40,7 +40,7 @@ in pkgs.writeShellApplication {
                 exit 0
             fi
 
-            # Change color scheme
+            # Change colorscheme
             wallust run -I background "${Wallpapers}/$selected"
 
             # Cache wallpaper
@@ -52,9 +52,6 @@ in pkgs.writeShellApplication {
                     --transition-fps=$transition_fps \
                     --transition-duration=$transition_duration
 
-            # Relaunch waybar with new colors
-            # killall -SIGUSR2 waybar
-
             exit 0
         ;;        
 
@@ -62,7 +59,7 @@ in pkgs.writeShellApplication {
             # Get random wallpaper from the wallpapers folder
             random_wallpaper=$( find ${Wallpapers} -maxdepth 1 -type f | shuf -n 1 )
 
-            # Random wallpaper change
+            # Change colorscheme
             wallust run -I background "$random_wallpaper"
 
             # Cache wallpaper
@@ -73,9 +70,6 @@ in pkgs.writeShellApplication {
                     --transition-type="$transition_type" \
                     --transition-fps=$transition_fps \
                     --transition-duration=$transition_duration
-
-            # Reload waybar with new css
-            # killall -SIGUSR2 waybar
 
             exit 0
         ;;

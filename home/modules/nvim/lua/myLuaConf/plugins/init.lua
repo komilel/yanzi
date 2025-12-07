@@ -1,11 +1,12 @@
 local colorschemeName = nixCats('colorscheme')
 if not require('nixCatsUtils').isNixCats then
-  colorschemeName = 'onedark'
+  colorschemeName = 'tokyonight'
 end
+
 -- Could I lazy load on colorscheme with lze?
 -- sure. But I was going to call vim.cmd.colorscheme() during startup anyway
 -- this is just an example, feel free to do a better job!
-vim.cmd.colorscheme(colorschemeName)
+-- vim.cmd.colorscheme(colorschemeName)
 
 local ok, notify = pcall(require, "notify")
 if ok then
@@ -63,6 +64,7 @@ if nixCats('general.extra') then
   vim.keymap.set("n", "<leader>-", "<cmd>Oil .<CR>", { noremap = true, desc = 'Open nvim root directory' })
 end
 
+--- Loading plugins via lze
 require('lze').load {
   { import = "myLuaConf.plugins.telescope", },
   { import = "myLuaConf.plugins.treesitter", },
@@ -166,7 +168,7 @@ require('lze').load {
 
       require('lualine').setup({
         options = {
-          icons_enabled = false,
+          icons_enabled = true,
           theme = colorschemeName,
           component_separators = '|',
           section_separators = '',
@@ -274,36 +276,122 @@ require('lze').load {
     end,
   },
   {
-    "which-key.nvim",
-    for_cat = 'general.extra',
-    -- cmd = { "" },
-    event = "DeferredUIEnter",
-    -- ft = "",
-    -- keys = "",
-    -- colorscheme = "",
-    after = function (plugin)
-      require('which-key').setup({
-      })
-      require('which-key').add {
-        { "<leader><leader>", group = "buffer commands" },
-        { "<leader><leader>_", hidden = true },
-        { "<leader>c", group = "[c]ode" },
-        { "<leader>c_", hidden = true },
-        { "<leader>d", group = "[d]ocument" },
-        { "<leader>d_", hidden = true },
-        { "<leader>g", group = "[g]it" },
-        { "<leader>g_", hidden = true },
-        { "<leader>m", group = "[m]arkdown" },
-        { "<leader>m_", hidden = true },
-        { "<leader>r", group = "[r]ename" },
-        { "<leader>r_", hidden = true },
-        { "<leader>s", group = "[s]earch" },
-        { "<leader>s_", hidden = true },
-        { "<leader>t", group = "[t]oggles" },
-        { "<leader>t_", hidden = true },
-        { "<leader>w", group = "[w]orkspace" },
-        { "<leader>w_", hidden = true },
-      }
-    end,
+    "nvim-autopairs",
+    for_cat = "general.always",
+    event = "InsertEnter",
+    after = function ()
+      require("nvim-autopairs").setup {}
+    end
+  },
+  {
+    "noice.nvim",
+    for_cat = "general.extra",
+    after = function ()
+      require("noice").setup({})
+    end
+  },
+  {
+    "typescript-tools.nvim",
+    for_cat = "lsps.typescript",
+    after = function()
+      require("typescript-tools").setup {}
+    end
+  },
+  {
+    "harpoon2",
+    for_cat = "general.always",
+    after = function ()
+      local harpoon = require("harpoon")
+
+      vim.keymap.set("n", "<leader>ha", function()
+        harpoon:list():add()
+      end)
+
+      vim.keymap.set("n", "<leader>hl", function()
+        harpoon.ui:toggle_quick_menu(harpoon:list())
+      end)
+
+      vim.keymap.set("n", "<leader>hp", function()
+        harpoon:list():prev()
+      end)
+
+      vim.keymap.set("n", "<leader>hn", function()
+        harpoon:list():next()
+      end)
+
+      vim.keymap.set("n", "<M-C-H>", function()
+        harpoon:list():select(1)
+      end)
+
+      vim.keymap.set("n", "<M-C-J>", function()
+        harpoon:list():select(2)
+      end)
+
+      vim.keymap.set("n", "<M-C-K>", function()
+        harpoon:list():select(3)
+      end)
+
+      vim.keymap.set("n", "<M-C-L>", function()
+        harpoon:list():select(4)
+      end)
+
+      vim.keymap.set("n", "<M-C-Y>", function()
+        harpoon:list():select(5)
+      end)
+
+      vim.keymap.set("n", "<M-C-U>", function()
+        harpoon:list():select(6)
+      end)
+
+      vim.keymap.set("n", "<M-C-I>", function()
+        harpoon:list():select(7)
+      end)
+
+      vim.keymap.set("n", "<M-C-O>", function()
+        harpoon:list():select(8)
+      end)
+    end
+  },
+  {
+    "nvim-ts-autotag",
+    for_cat = "general.always",
+    after = function ()
+      require('nvim-ts-autotag').setup({})
+    end
+  },
+  {
+    "todo-comments.nvim",
+    for_cat = "general.always",
+    after = function ()
+      require("todo-comments").setup({})
+    end
+  },
+  {
+    "vim-tmux-navigator",
+    for_cat = "general.always",
+    cmd = {
+      "TmuxNavigateLeft",
+      "TmuxNavigateDown",
+      "TmuxNavigateUp",
+      "TmuxNavigateRight",
+      "TmuxNavigatePrevious",
+      "TmuxNavigatorProcessList",
+    },
+    keys = {
+      { "<C-h>", "<cmd><C-U>TmuxNavigateLeft<cr>" },
+      { "<C-j>", "<cmd><C-U>TmuxNavigateDown<cr>" },
+      { "<C-k>", "<cmd><C-U>TmuxNavigateUp<cr>" },
+      { "<C-l>", "<cmd><C-U>TmuxNavigateRight<cr>" },
+      { "<C-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>" },
+    },
+  },
+
+  --- AI Plugins
+  {
+    "supermaven-nvim",
+    for_cat = "ai",
+    after = function ()
+      require("supermaven-nvim").setup({})
+    end
   },
 }

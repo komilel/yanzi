@@ -29,7 +29,32 @@ require('lze').load {
     -- and it will run for all specs with type(plugin.lsp) == table
     -- when their filetype trigger loads them
     lsp = function(plugin)
-      vim.lsp.config(plugin.name, plugin.lsp or {})
+      -- TODO: Look how this works
+
+      -- Specify how the border looks like
+      local border = {
+        { '┌', 'FloatBorder' },
+        { '─', 'FloatBorder' },
+        { '┐', 'FloatBorder' },
+        { '│', 'FloatBorder' },
+        { '┘', 'FloatBorder' },
+        { '─', 'FloatBorder' },
+        { '└', 'FloatBorder' },
+        { '│', 'FloatBorder' },
+      }
+
+      -- Add the border on hover and on signature help popup window
+      local handlers = {
+        ['textDocument/hover'] = vim.lsp.buf.hover({ border = border }),
+        ['textDocument/signatureHelp'] = vim.lsp.buf.signature_help({ border = border }),
+      }
+
+      -- Create default options for lsp server
+      local lspOpts = {
+        handlers = handlers
+      }
+
+      vim.lsp.config(plugin.name, plugin.lsp or lspOpts)
       vim.lsp.enable(plugin.name)
     end,
     before = function(_)
@@ -107,6 +132,23 @@ require('lze').load {
     lsp = {
       filetypes = { "python", "ipynb" },
     },
+  },
+  {
+    "ruff",
+    for_cat = "python",
+    lsp = {
+      filetypes = { "python", "ipynb" },
+      on_attach = function(client)
+        client.server_capabilities.hoverProvider = false -- let basedpyright handle hover
+      end,
+    },
+  },
+  {
+    "typescript-tools.nvim",
+    for_cat = "typescript",
+    after = function()
+      require("typescript-tools").setup({})
+    end
   },
   {
     "rnix",

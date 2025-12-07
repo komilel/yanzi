@@ -15,13 +15,20 @@ in {
           template = "waybar.css";
           target = "${Home}/.cache/wallust/waybar.css";
         };
+
         hyprland = {
           src = "colors-hyprland.conf";
           dst = "${Home}/.cache/wallust/colors-hyprland.conf";
         };
+
         rofi = {
           src = "colors-rofi.rasi";
           dst = "${Home}/.cache/wallust/colors-rofi.rasi";
+        };
+
+        niri = {
+          src = "colors-niri.kdl";
+          dst = "${Home}/.cache/wallust/colors-niri.kdl";
         };
       };
     };

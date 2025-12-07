@@ -23,6 +23,11 @@
 
     autosuggestion.enable = true;
 
+    initContent = ''
+      # Load wallust theme to new terminal instances
+      cat ~/.cache/wallust/sequences
+    '';
+
     # setOptions = [
     #   "appendhistory"
     #   "sharehistory"
