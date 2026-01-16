@@ -134,6 +134,13 @@ require('lze').load {
     },
   },
   {
+    "clangd",
+    for_cat = "clang",
+    lsp = {
+      filetypes = { "c", "cpp" },
+    },
+  },
+  {
     "ruff",
     for_cat = "python",
     lsp = {

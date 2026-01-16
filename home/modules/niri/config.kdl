@@ -555,7 +555,7 @@ binds {
   Mod+D { switch-preset-column-width; }
   Mod+Shift+R { switch-preset-window-height; }
   Mod+Ctrl+R { reset-window-height; }
-  Mod+F { maximize-column; }
+  Mod+F { maximize-window-to-edges; }
   Mod+Shift+F { fullscreen-window; }
 
   // Expand the focused column to space not taken up by other fully visible columns.
@@ -620,5 +620,9 @@ binds {
   // Powers off the monitors. To turn them back on, do any input like
   // moving the mouse or pressing any other key.
   Mod+Shift+P { power-off-monitors; }
+
+  // Dynamic cast target
+  Mod+A { set-dynamic-cast-monitor; }
+  Mod+Ctrl+A { clear-dynamic-cast-target; }
 }
 

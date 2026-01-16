@@ -24,7 +24,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     nixCats.url = "github:BirdeeHub/nixCats-nvim";
-# see :help nixCats.flake.inputs
+    # see :help nixCats.flake.inputs
     # If you want your plugin to be loaded by the standard overlay,
     # i.e. if it wasnt on nixpkgs, but doesnt have an extra build step.
     # Then you should name it "plugins-something"
@@ -37,6 +37,11 @@
     # No longer fetched to avoid forcing people to import it, but this remains here as a tutorial.
     # How to import it into your config is shown farther down in the startupPlugins set.
     # You put it here like this, and then below you would use it with `pkgs.neovimPlugins.hlargs`
+
+    # "plugins-codex" = {
+    #   url = "github:johnseth97/codex.nvim";
+    #   flake = false;
+    # };
 
     # "plugins-vim-jukit" = {
     #   url = "github:luk400/vim-jukit";
@@ -115,14 +120,12 @@
           fd
         ];
 
-        # these names are arbitrary.
         lint = with pkgs; [
         ];
 
-        # but you can choose which ones you want
-        # per nvim package you export
         debug = with pkgs; {
           go = [ delve ];
+          python = [ python313Packages.debugpy ];
         };
 
         go = with pkgs; [
@@ -141,6 +144,12 @@
         typescript = with pkgs; [
           typescript
           typescript-language-server
+        ];
+        
+        clang = with pkgs; [
+          clang-tools
+          lldb
+          bear
         ];
 
         bash = with pkgs; [
@@ -213,6 +222,7 @@
             nvim-dap-virtual-text
           ];
           go = [ nvim-dap-go ];
+          python = [ nvim-dap-python ];
         };
         lint = with pkgs.vimPlugins; [
           nvim-lint
@@ -233,6 +243,11 @@
         ];
         ai = with pkgs.vimPlugins; [
           supermaven-nvim
+          claudecode-nvim
+        ];
+        collab = with pkgs.vimPlugins; [
+          live-share-nvim
+          instant-nvim
         ];
         general = {
           blink = with pkgs.vimPlugins; [
@@ -332,7 +347,7 @@
       # vim.g.python3_host_prog
       # or run from nvim terminal via :!<packagename>-python3
       python3.libraries = {
-        test = (_:[]);
+        general = [ (p: [p.debugpy]) ];
       };
       # populates $LUA_PATH and $LUA_CPATH
       extraLuaPackages = {
@@ -346,18 +361,17 @@
       # The categories argument of this function is the FINAL value.
       # You may use it in any of the other sets.
       extraCats = {
-        test = [
-          [ "test" "default" ]
-        ];
         debug = [
           [ "debug" "default" ]
         ];
         go = [
-          [ "debug" "go" ] # yes it has to be a list of lists
+          [ "debug" "go" ]
+        ];
+        python = [
+          [ "debug" "python" ]
         ];
       };
     };
-
 
     # packageDefinitions:
 
@@ -390,17 +404,27 @@
           wrapRc = true;
           configDirName = "nixCats-nvim";
           # neovim-unwrapped = inputs.neovim-nightly-overlay.packages.${pkgs.system}.neovim;
-          hosts.python3.enable = true;
+
+          hosts.python3 = {
+            enable = true;
+            path = depfn: {
+              value = (pkgs.python3.withPackages (p: depfn p)).interpreter;
+              args = [ "--unset" "PYTHONPATH" ];
+            };
+            pluginAttr = "python3Dependencies";
+          };
+
           hosts.node.enable = true;
         };
         # enable the categories you want from categoryDefinitions
         categories = {
           markdown = true;
-          ai = true;
+          ai = false;
           general = true;
           lint = true;
           format = true;
           neonixdev = true;
+          collab = true;
 
           # enabling this category will enable the go category,
           # and ALSO debug.go and debug.default due to our extraCats in categoryDefinitions.
@@ -409,6 +433,7 @@
           # Languages
           python = true;
           typescript = true;
+          clang = true;
 
           languages = {
             typescript = true;

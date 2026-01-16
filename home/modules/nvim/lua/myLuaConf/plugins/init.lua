@@ -385,6 +385,18 @@ require('lze').load {
       { "<C-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>" },
     },
   },
+  {
+    "live-share.nvim",
+    for_cat = "collab",
+    after = function ()
+      vim.g.instant_username = "Komi"
+      require("live-share").setup({})
+    end
+  },
+  {
+    "instant.nvim",
+    for_cat = "collab",
+  },
 
   --- AI Plugins
   {

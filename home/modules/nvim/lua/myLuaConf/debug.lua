@@ -1,7 +1,6 @@
 require('lze').load {
   {
     "nvim-dap",
-    -- NOTE: I dont want to figure out mason tools installer for this, so I only enabled debug if nix loaded config
     for_cat = { cat = 'debug', default = false },
     -- cmd = { "" },
     -- event = "",
@@ -15,7 +14,7 @@ require('lze').load {
       { "<leader>B", desc = "Debug: Set Breakpoint" },
       { "<F7>", desc = "Debug: See last session result." },
     },
-    -- colorscheme = "",
+    colorscheme = "tokyonight",
     load = (require('nixCatsUtils').isNixCats and function(name)
       vim.cmd.packadd(name)
       vim.cmd.packadd("nvim-dap-ui")
@@ -39,9 +38,14 @@ require('lze').load {
       vim.keymap.set('n', '<leader>B', function()
         dap.set_breakpoint(vim.fn.input 'Breakpoint condition: ')
       end, { desc = 'Debug: Set Breakpoint' })
+      vim.keymap.set('n', '<leader>?', function ()
+        dapui.eval(nil, { enter = true })
+      end, { desc = 'Debug: Eval var under the cursor' })
 
       -- Toggle to see last session result. Without this, you can't see session output in case of unhandled exception.
       vim.keymap.set('n', '<F7>', dapui.toggle, { desc = 'Debug: See last session result.' })
+
+      vim.keymap.set('n', '<F12>', dap.terminate, { desc = 'Debug: Terminate session' })
 
       dap.listeners.after.event_initialized['dapui_config'] = dapui.open
       dap.listeners.before.event_terminated['dapui_config'] = dapui.close
@@ -68,6 +72,11 @@ require('lze').load {
           },
         },
       }
+
+      -- Dap Signs setup
+      vim.cmd("hi DapBreakpointColor guifg=#fb3737")
+      vim.fn.sign_define("DapBreakpoint", { text = "", texthl = "DapBreakpointColor" })
+      vim.fn.sign_define("DapStopped", { text = "", texthl = "CurrentLineNr" })
 
       require("nvim-dap-virtual-text").setup {
         enabled = true,                       -- enable this plugin (the default)
@@ -116,4 +125,13 @@ require('lze').load {
       require("dap-go").setup()
     end,
   },
+  {
+    "nvim-dap-python",
+    for_cat = { cat = 'debug.python', default = false },
+    on_plugin = { "nvim-dap" },
+    after = function ()
+      --- Grab python wrapper script from nixCats bin directory (in store)
+      require('dap-python').setup(vim.g.python3_host_prog)
+    end
+  }
 }

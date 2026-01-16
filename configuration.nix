@@ -46,14 +46,20 @@ in {
     noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-cjk-serif
+    comfortaa
+    rubik
   ];
 
-  qt.enable = true;
+  qt = {
+    enable = true;
+    platformTheme = "kde";
+    style = "adwaita-dark";
+  };
 
   # Enable CUPS to print documents.
   services.printing = {
     enable = true;
-    drivers = with pkgs; [ hplip hplipWithPlugin ];
+    drivers = with pkgs; [ hplipWithPlugin ];
   };
 
   services.avahi = {
@@ -149,36 +155,16 @@ in {
 
     direnv.enable = true;
 
-    # Tmp
     adb.enable = true;
 
-    vscode = {
+    vscode.enable = true;
+
+    kdeconnect.enable = true;
+
+    weylus = {
       enable = true;
-      extensions = with pkgs.vscode-extensions; [
-        # General extensions
-        catppuccin.catppuccin-vsc
-        catppuccin.catppuccin-vsc-icons
-        vscodevim.vim
-        mkhl.direnv
-
-        # == Languages ==
-        # Python
-        ms-python.debugpy
-        ms-python.python
-        ms-python.pylint
-        ms-toolsai.jupyter
-        ms-toolsai.jupyter-renderers
-        ms-toolsai.vscode-jupyter-cell-tags
-        ms-toolsai.jupyter-keymap
-
-        # C/Cpp
-        hars.cppsnippets
-        ms-vscode.cpptools
-
-        # Nix
-        bbenoist.nix
-        kamadorueda.alejandra
-      ];
+      users = [ "root" "komi" ];
+      openFirewall = true;
     };
     
     # For ciscoPacketTracer8
@@ -209,27 +195,6 @@ in {
 
   nixpkgs.config = {
     allowUnfree = true;
-  };
-
-  xdg.portal = {
-    enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-gtk
-      xdg-desktop-portal-gnome
-    ];
-    config = {
-      common = {
-        default = [ "gtk" ];
-      };
-      niri = {
-        default = [
-          "gtk"
-          "gnome"
-        ];
-        "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
-        "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
-      };
-    };
   };
 
   environment.systemPackages = with pkgs; [
@@ -276,6 +241,14 @@ in {
     qalculate-gtk
     powertop
     fastfetch
+    thunderbird
+
+    # Printing (For the guis)
+    hplipWithPlugin
+
+    # Comms
+    wechat
+    rustdesk
 
     # Networking
     samba
@@ -306,6 +279,10 @@ in {
     # Dev
     devenv
 
+    # AI tools
+    codex
+    claude-code
+
     # Gaming
     prismlauncher
     lutris
@@ -326,15 +303,9 @@ in {
 
     # === Tmp packages - School ===
 
-    # Prolog language
-    swi-prolog
-
     # Android & Java dev
     android-studio
-    jetbrains.idea-community-bin
-
-    # Gis
-    qgis
+    jetbrains.idea
 
     # Plantuml
     plantuml
@@ -438,14 +409,23 @@ in {
     enable = true;
   };
 
+  # === Tmp Services ===
+  services.tomcat = {
+    enable = true;
+  };
+
   powerManagement.enable = true;
 
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-  networking.firewall.checkReversePath = "loose";
+  networking.firewall = { 
+    enable = false;
+    allowedTCPPortRanges = [ 
+      { from = 1714; to = 1764; } # KDE Connect
+    ];  
+    allowedUDPPortRanges = [ 
+      { from = 1714; to = 1764; } # KDE Connect
+    ];  
+    checkReversePath = "loose";
+  };
 
   # Copy the NixOS configuration file and link it from the resulting system
   # (/run/current-system/configuration.nix). This is useful in case you

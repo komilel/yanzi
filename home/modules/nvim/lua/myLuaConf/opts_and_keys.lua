@@ -141,6 +141,15 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 -- Tab like <C-6>
 vim.keymap.set('n', '<Tab>', '<C-6>', { desc = 'Cycle to previous buffer and back' })
 
+-- Clear search highlighting
+vim.keymap.set('n', '<Esc><Esc>', "<cmd>nohlsearch<CR>", { desc = 'Clear search highlighting' })
+
+--- Toggle virtual text
+vim.keymap.set('n', '<leader>dv', function ()
+  local new_config = not vim.diagnostic.config().virtual_text
+  vim.diagnostic.config({ virtual_text = new_config })
+end, { desc = '[D]iagnostic [V]irtual Text Toggle' })
+
 -- kickstart.nvim starts you with this. 
 -- But it constantly clobbers your system clipboard whenever you delete anything.
 
