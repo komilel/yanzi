@@ -134,13 +134,6 @@ require('lze').load {
     },
   },
   {
-    "clangd",
-    for_cat = "clang",
-    lsp = {
-      filetypes = { "c", "cpp" },
-    },
-  },
-  {
     "ruff",
     for_cat = "python",
     lsp = {
@@ -151,11 +144,32 @@ require('lze').load {
     },
   },
   {
+    "clangd",
+    for_cat = "clang",
+    lsp = {
+      filetypes = { "c", "cpp" },
+    },
+  },
+  {
     "typescript-tools.nvim",
     for_cat = "typescript",
     after = function()
       require("typescript-tools").setup({})
     end
+  },
+  {
+    "tailwindcss",
+    for_cat = "tailwindcss",
+    lsp = {
+      filetypes = { "css", "javascriptreact", "typescriptreact"  },
+    },
+  },
+  {
+    "html",
+    for_cat = "html",
+    lsp = {
+      filetypes = { "html", "javascriptreact", "typescriptreact" },
+    },
   },
   {
     "rnix",

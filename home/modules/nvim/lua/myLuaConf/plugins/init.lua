@@ -382,8 +382,17 @@ require('lze').load {
       { "<C-j>", "<cmd><C-U>TmuxNavigateDown<cr>" },
       { "<C-k>", "<cmd><C-U>TmuxNavigateUp<cr>" },
       { "<C-l>", "<cmd><C-U>TmuxNavigateRight<cr>" },
-      { "<C-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>" },
     },
+    after = function ()
+      vim.keymap.set("t", "<C-h>", "<C-\\><C-N><cmd>TmuxNavigateLeft<cr>")
+      vim.keymap.set("t", "<C-j>", "<C-\\><C-N><cmd>TmuxNavigateDown<cr>")
+      vim.keymap.set("t", "<C-k>", "<C-\\><C-N><cmd>TmuxNavigateUp<cr>")
+      vim.keymap.set("t", "<C-l>", "<C-\\><C-N><cmd>TmuxNavigateRight<cr>")
+      vim.keymap.set("i", "<C-h>", "<C-\\><C-N><cmd>TmuxNavigateLeft<cr>")
+      vim.keymap.set("i", "<C-j>", "<C-\\><C-N><cmd>TmuxNavigateDown<cr>")
+      vim.keymap.set("i", "<C-k>", "<C-\\><C-N><cmd>TmuxNavigateUp<cr>")
+      vim.keymap.set("i", "<C-l>", "<C-\\><C-N><cmd>TmuxNavigateRight<cr>")
+    end
   },
   {
     "live-share.nvim",
@@ -396,14 +405,73 @@ require('lze').load {
   {
     "instant.nvim",
     for_cat = "collab",
+    dep_of = "live-share.nvim",
   },
 
   --- AI Plugins
   {
     "supermaven-nvim",
-    for_cat = "ai",
+    for_cat = "ai.supermaven",
     after = function ()
       require("supermaven-nvim").setup({})
     end
   },
+  {
+    "claudecode.nvim",
+    for_cat = "ai.claude",
+    keys = {
+      { "<leader>a", nil, desc = "AI/Claude Code" },
+      { "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
+      { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
+      { "<C-,>", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
+      { "<leader>ar", "<cmd>ClaudeCode --resume<cr>", desc = "Resume Claude" },
+      { "<leader>aC", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
+      { "<leader>am", "<cmd>ClaudeCodeSelectModel<cr>", desc = "Select Claude model" },
+      { "<leader>ab", "<cmd>ClaudeCodeAdd %<cr>", desc = "Add current buffer" },
+      { "<leader>as", "<cmd>ClaudeCodeSend<cr>", mode = "v", desc = "Send to Claude" },
+      {
+        "<leader>as",
+        "<cmd>ClaudeCodeTreeAdd<cr>",
+        desc = "Add file",
+        ft = { "NvimTree", "neo-tree", "oil", "minifiles", "netrw" },
+      },
+      -- Diff management
+      { "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>", desc = "Accept diff" },
+      { "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>", desc = "Deny diff" },
+    },
+    after = function ()
+      require("claudecode").setup({
+        terminal = {
+          ---@module "snacks"
+          ---@type snacks.win.Config|{}
+          snacks_win_opts = {
+            position = "float",
+            width = 0.9,
+            height = 0.9,
+            border = "rounded",
+            backdrop = 80,
+            keys = {
+              claude_hide = {
+                "<C-,>",
+                function(self)
+                  self:hide()
+                end,
+                mode = "t",
+                desc = "Hide",
+              },
+            },
+          },
+        },
+      })
+    end
+  },
+  {
+    "snacks.nvim",
+    for_cat = "ai.claude",
+    after = function ()
+      require("snacks").setup({
+        terminal = { enabled = true }
+      })
+    end
+  }
 }

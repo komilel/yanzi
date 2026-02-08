@@ -145,6 +145,15 @@
           typescript
           typescript-language-server
         ];
+
+        tailwindcss = with pkgs; [
+          tailwindcss
+          tailwindcss-language-server
+        ];
+
+        html = with pkgs; [
+          vscode-langservers-extracted
+        ];
         
         clang = with pkgs; [
           clang-tools
@@ -241,10 +250,13 @@
         neonixdev = with pkgs.vimPlugins; [
           lazydev-nvim
         ];
-        ai = with pkgs.vimPlugins; [
-          supermaven-nvim
-          claudecode-nvim
-        ];
+        ai = with pkgs.vimPlugins; {
+          supermaven = [ supermaven-nvim ];
+          claude = [ 
+            claudecode-nvim
+            snacks-nvim
+          ];
+        };
         collab = with pkgs.vimPlugins; [
           live-share-nvim
           instant-nvim
@@ -397,7 +409,7 @@
           # or, whatever you named the package definition in the packageDefinitions set.
           # WARNING: MAKE SURE THESE DONT CONFLICT WITH OTHER INSTALLED PACKAGES ON YOUR PATH
           # That would result in a failed build, as nixos and home manager modules validate for collisions on your path
-          aliases = [ "v" "vim" ];
+          aliases = [ "nvim" "v" "vim" ];
 
           # explained below in the `regularCats` package's definition
           # OR see :help nixCats.flake.outputs.settings for all of the settings available
@@ -419,7 +431,7 @@
         # enable the categories you want from categoryDefinitions
         categories = {
           markdown = true;
-          ai = false;
+          ai = true;
           general = true;
           lint = true;
           format = true;
@@ -434,6 +446,8 @@
           python = true;
           typescript = true;
           clang = true;
+          tailwindcss = true;
+          html = true;
 
           languages = {
             typescript = true;

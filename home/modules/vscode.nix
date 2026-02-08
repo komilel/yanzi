@@ -31,6 +31,10 @@
           # Nix
           bbenoist.nix
           kamadorueda.alejandra
+
+          # Flutter
+          dart-code.dart-code
+          dart-code.flutter
         ];
       };
     };

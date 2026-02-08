@@ -2,6 +2,8 @@
 # Link: https://github.com/d2718nis/rose-pine-dunst/blob/main/rose-pine.conf
 
 [global]
+    follow = "mouse"
+
     width = 350
     offset = 3x3
     

@@ -14,7 +14,7 @@ vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 
 -- Set highlight on search
 vim.opt.hlsearch = true
-vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+vim.keymap.set('n', '<leader>n', '<cmd>nohlsearch<CR>')
 
 -- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
@@ -67,6 +67,8 @@ vim.o.completeopt = 'menu,preview,noselect'
 
 -- NOTE: You should make sure your terminal supports this
 vim.o.termguicolors = true
+
+vim.opt.backupcopy = "yes"
 
 -- Configure diagnostic messages
 vim.diagnostic.config(
@@ -142,7 +144,7 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('n', '<Tab>', '<C-6>', { desc = 'Cycle to previous buffer and back' })
 
 -- Clear search highlighting
-vim.keymap.set('n', '<Esc><Esc>', "<cmd>nohlsearch<CR>", { desc = 'Clear search highlighting' })
+vim.keymap.set('n', '<leader>ch', "<cmd>nohlsearch<CR>", { desc = 'Clear search highlighting' })
 
 --- Toggle virtual text
 vim.keymap.set('n', '<leader>dv', function ()

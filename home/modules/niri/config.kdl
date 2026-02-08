@@ -384,6 +384,7 @@ binds {
   // Apps
   Mod+Q hotkey-overlay-title="Open a Terminal: kitty" { spawn "kitty"; }
   Mod+R hotkey-overlay-title="Run an Application: rofi" { spawn-sh "rofi -show drun -config ~/.config/rofi/drun.rasi"; }
+  Mod+Alt+R hotkey-overlay-title="Run An Emoji Picker: rofimoji" { spawn-sh "rofimoji -a copy"; }
   Mod+B hotkey-overlay-title="Browser: zen" { spawn "zen-beta"; }
   Mod+E hotkey-overlay-title="File Manager: thunar" { spawn "thunar"; }
   Mod+T hotkey-overlay-title="Open Telegram" { spawn "Telegram"; }

@@ -1,0 +1,214 @@
+// Colors
+$bg-dark: #1a1b26;
+$bg-light: #24283b;
+$bg-hover: #414868;
+$fg-primary: #c0caf5;
+$fg-secondary: #a9b1d6;
+$fg-muted: #565f89;
+$accent: #7aa2f7;
+$green: #9ece6a;
+$yellow: #e0af68;
+$red: #f7768e;
+$cyan: #7dcfff;
+$magenta: #bb9af7;
+
+// Bar
+window.Bar {
+  background: transparent;
+  color: $fg-primary;
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 13px;
+  font-weight: 500;
+
+  > centerbox {
+    background: $bg-dark;
+    padding: 0 8px;
+  }
+}
+
+// Clock
+.clock {
+  background: transparent;
+  border: none;
+  padding: 4px 16px;
+  border-radius: 8px;
+  transition: background 200ms ease;
+
+  &:hover {
+    background: $bg-light;
+  }
+
+  label {
+    color: $fg-primary;
+  }
+}
+
+.calendar-popup {
+  padding: 8px;
+  background: $bg-dark;
+  border-radius: 12px;
+
+  calendar {
+    background: $bg-dark;
+    color: $fg-primary;
+    padding: 4px;
+
+    &:selected {
+      background: $accent;
+      color: $bg-dark;
+    }
+  }
+}
+
+// System Stats
+.system-stats {
+  background: transparent;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 8px;
+  transition: background 200ms ease;
+
+  &:hover {
+    background: $bg-light;
+  }
+}
+
+.stat-item {
+  padding: 0 6px;
+
+  .stat-icon {
+    font-size: 14px;
+    margin-right: 4px;
+    color: $fg-muted;
+  }
+
+  .stat-value {
+    color: $fg-secondary;
+    font-size: 12px;
+  }
+
+  &.cpu .stat-icon { color: $cyan; }
+  &.ram .stat-icon { color: $magenta; }
+  &.battery .stat-icon { color: $green; }
+  &.volume .stat-icon { color: $yellow; }
+}
+
+.stat-separator {
+  color: $fg-muted;
+  margin: 0 2px;
+  font-size: 11px;
+}
+
+// Dashboard
+.dashboard {
+  background: $bg-dark;
+  padding: 16px;
+  border-radius: 12px;
+  min-width: 280px;
+}
+
+.dashboard-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: $fg-primary;
+  margin-bottom: 16px;
+}
+
+.dashboard-section {
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.dashboard-stat {
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .stat-header {
+    margin-bottom: 6px;
+  }
+
+  .stat-icon {
+    font-size: 14px;
+    margin-right: 8px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: $fg-secondary;
+  }
+
+  .stat-detail {
+    font-size: 11px;
+    color: $fg-muted;
+  }
+
+  &.cpu .stat-icon { color: $cyan; }
+  &.ram .stat-icon { color: $magenta; }
+  &.disk .stat-icon { color: $yellow; }
+}
+
+.progress-bar {
+  min-height: 6px;
+  border-radius: 3px;
+  background: $bg-light;
+
+  trough {
+    min-height: 6px;
+    border-radius: 3px;
+    background: $bg-light;
+  }
+
+  block.filled {
+    border-radius: 3px;
+    background: $accent;
+  }
+
+  &.cpu block.filled { background: $cyan; }
+  &.ram block.filled { background: $magenta; }
+  &.disk block.filled { background: $yellow; }
+}
+
+.info-row {
+  padding: 8px 0;
+  border-bottom: 1px solid $bg-light;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .info-icon {
+    font-size: 14px;
+    margin-right: 8px;
+    color: $fg-muted;
+  }
+
+  .info-label {
+    font-size: 12px;
+    color: $fg-secondary;
+  }
+
+  .info-value {
+    font-size: 12px;
+    color: $fg-primary;
+    font-weight: 500;
+  }
+}
+
+// Popover styling
+popover {
+  background: $bg-dark;
+  border: 1px solid $bg-light;
+  border-radius: 12px;
+
+  > contents {
+    background: transparent;
+    border-radius: 12px;
+    padding: 0;
+  }
+}

@@ -21,21 +21,14 @@
 
     enableCompletion = true;
 
+    defaultKeymap = "emacs";
+
     autosuggestion.enable = true;
 
     initContent = ''
       # Load wallust theme to new terminal instances
       cat ~/.cache/wallust/sequences
     '';
-
-    # setOptions = [
-    #   "appendhistory"
-    #   "sharehistory"
-    #   "hist_ignore_space"
-    #   "hist_ignore_all_dups"
-    #   "hist_ignore_dups"
-    #   "hist_find_no_dups"
-    # ];
 
     syntaxHighlighting = {
       enable = true;
@@ -54,8 +47,12 @@
       }
     ];
 
-    history.size = 10000;
-    history.path = "${config.xdg.dataHome}/zsh/history";
+    history = {
+      size = 15000;
+      findNoDups = true;
+      ignoreAllDups = true;
+      path = "${config.xdg.dataHome}/zsh/history";
+    };
   };
 
   # Integrating fzf

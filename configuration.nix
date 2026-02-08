@@ -143,7 +143,7 @@ in {
 
     thunar = {
       enable = true;
-      plugins = with pkgs.xfce; [ thunar-archive-plugin thunar-volman ];
+      plugins = with pkgs; [ thunar-archive-plugin thunar-volman ];
     };
 
     steam = {
@@ -154,8 +154,6 @@ in {
     gamemode.enable = true;
 
     direnv.enable = true;
-
-    adb.enable = true;
 
     vscode.enable = true;
 
@@ -233,6 +231,7 @@ in {
     pulseaudio
     yazi
     rofi
+    rofimoji
     lsd
     networkmanagerapplet
     file-roller
@@ -247,8 +246,16 @@ in {
     hplipWithPlugin
 
     # Comms
-    wechat
+    wechat-uos
     rustdesk
+
+    # Secrets
+    bitwarden-desktop
+
+    # Wine
+    wineWowPackages.unstableFull
+    wineWowPackages.wayland
+    winetricks
 
     # Networking
     samba
@@ -256,12 +263,14 @@ in {
 
     # Packages for Niri
     xwayland-satellite
+    labwc
 
     # Packages that I need from hypr*
     hyprpicker
 
     # Drawing
     inkscape-with-extensions
+    figma-linux
     gimp
 
     # Editing
@@ -275,9 +284,15 @@ in {
     exfatprogs
     ghostscript
     sshfs
+    kalker
+    ffmpeg
+    zip
+    libwebp
 
     # Dev
     devenv
+    bun
+    nodejs
 
     # AI tools
     codex
@@ -286,6 +301,7 @@ in {
     # Gaming
     prismlauncher
     lutris
+    r2modman
 
     # Themes
     colloid-gtk-theme
@@ -305,7 +321,11 @@ in {
 
     # Android & Java dev
     android-studio
+    android-tools
     jetbrains.idea
+
+    # Flutter dev
+    libGLU
 
     # Plantuml
     plantuml
@@ -328,6 +348,7 @@ in {
     XDG_CURRENT_DESKTOP = "niri";
     XDG_SESSION_TYPE = "wayland";
     XDG_SESSION_DESKTOP = "niri";
+    EDITOR = "nvim";
   };
 
   nix = {
