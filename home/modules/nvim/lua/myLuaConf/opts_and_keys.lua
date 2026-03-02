@@ -16,7 +16,7 @@ vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 vim.opt.hlsearch = true
 vim.keymap.set('n', '<leader>n', '<cmd>nohlsearch<CR>')
 
--- Preview substitutions live, as you type!
+-- Previhttps://noogle.dev/q?term=huhew substitutions live, as you type!
 vim.opt.inccommand = 'split'
 
 -- Minimal number of screen lines to keep above and below the cursor.
@@ -146,13 +146,15 @@ vim.keymap.set('n', '<Tab>', '<C-6>', { desc = 'Cycle to previous buffer and bac
 -- Clear search highlighting
 vim.keymap.set('n', '<leader>ch', "<cmd>nohlsearch<CR>", { desc = 'Clear search highlighting' })
 
+vim.keymap.set('t', '<C-,>', '<C-\\><C-n>', { desc = 'Exit from terminal mode to normal' })
+
 --- Toggle virtual text
 vim.keymap.set('n', '<leader>dv', function ()
   local new_config = not vim.diagnostic.config().virtual_text
   vim.diagnostic.config({ virtual_text = new_config })
 end, { desc = '[D]iagnostic [V]irtual Text Toggle' })
 
--- kickstart.nvim starts you with this. 
+-- kickstart.nvim starts you with this.
 -- But it constantly clobbers your system clipboard whenever you delete anything.
 
 -- Sync clipboard between OS and Neovim.
@@ -167,5 +169,3 @@ vim.keymap.set({"n", "v", "x"}, '<C-a>', 'gg0vG$', { noremap = true, silent = tr
 vim.keymap.set({'n', 'v', 'x'}, '<leader>p', '"+p', { noremap = true, silent = true, desc = 'Paste from clipboard' })
 vim.keymap.set('i', '<C-p>', '<C-r><C-p>+', { noremap = true, silent = true, desc = 'Paste from clipboard from within insert mode' })
 vim.keymap.set("x", "<leader>P", '"_dP', { noremap = true, silent = true, desc = 'Paste over selection without erasing unnamed register' })
-
-

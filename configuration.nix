@@ -1,19 +1,25 @@
-
-{ self, config, inputs, pkgs, lib, system, ... }:
-let
+{
+  self,
+  config,
+  inputs,
+  pkgs,
+  lib,
+  system,
+  ...
+}: let
   sddm-theme = inputs.silentSDDM.packages.${system}.default.override {
-      theme = "rei";
+    theme = "rei";
   };
 in {
-  imports =
-    [
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    ./hardware-configuration.nix
+    ./nvim/configuration.nix
+  ];
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = [ "ntfs" ];
+  boot.supportedFilesystems = ["ntfs"];
 
   networking.hostName = "Niko";
 
@@ -41,7 +47,7 @@ in {
     corefonts
     vista-fonts
     font-awesome
-    noto-fonts 
+    noto-fonts
     noto-fonts-color-emoji
     noto-fonts
     noto-fonts-cjk-sans
@@ -59,7 +65,7 @@ in {
   # Enable CUPS to print documents.
   services.printing = {
     enable = true;
-    drivers = with pkgs; [ hplipWithPlugin ];
+    drivers = with pkgs; [hplipWithPlugin];
   };
 
   services.avahi = {
@@ -123,11 +129,16 @@ in {
     enable32Bit = true;
   };
 
+  hardware.sane = {
+    enable = true;
+    extraBackends = [pkgs.hplipWithPlugin];
+  };
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.komi = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = [ "wheel" "kvm" "adbusers" ];
+    extraGroups = ["wheel" "kvm" "adbusers" "scanner" "lp"];
   };
 
   programs = {
@@ -143,7 +154,7 @@ in {
 
     thunar = {
       enable = true;
-      plugins = with pkgs; [ thunar-archive-plugin thunar-volman ];
+      plugins = with pkgs; [thunar-archive-plugin thunar-volman];
     };
 
     steam = {
@@ -161,188 +172,202 @@ in {
 
     weylus = {
       enable = true;
-      users = [ "root" "komi" ];
+      users = ["root" "komi"];
       openFirewall = true;
     };
-    
+
     # For ciscoPacketTracer8
-    # firejail = {
-    #   enable = true;
-    #   wrappedBinaries = {
-    #     packettracer8 = {
-    #       executable = lib.getExe pkgs.ciscoPacketTracer8;
-    #
-    #       # Will still want a .desktop entry as the package is not directly added
-    #       desktop = "${pkgs.ciscoPacketTracer8}/share/applications/cisco-pt8.desktop.desktop";
-    #
-    #       extraArgs = [
-    #         # This should make it run in isolated netns, preventing internet access
-    #         "--net=none"
-    #
-    #         # firejail is only needed for network isolation so no futher profile is needed
-    #         "--noprofile"
-    #
-    #         # Packet tracer doesn't play nice with dark QT themes so this
-    #         # should unset the theme. Uncomment if you have this issue.
-    #         # ''--env=QT_STYLE_OVERRIDE=""''
-    #       ];
-    #     };
-    #   };
-    # };
+    firejail = {
+      enable = true;
+      wrappedBinaries = {
+        packettracer9 = {
+          executable = lib.getExe pkgs.ciscoPacketTracer9;
+
+          # Will still want a .desktop entry as the package is not directly added
+          desktop = "${pkgs.ciscoPacketTracer9}/share/applications/cisco-packet-tracer-9.desktop";
+
+          extraArgs = [
+            # This should make it run in isolated netns, preventing internet access
+            "--net=none"
+
+            # firejail is only needed for network isolation so no futher profile is needed
+            "--noprofile"
+
+            # Packet tracer doesn't play nice with dark QT themes so this
+            # should unset the theme. Uncomment if you have this issue.
+            # ''--env=QT_STYLE_OVERRIDE=""''
+          ];
+        };
+      };
+    };
   };
+
+  # Shell (TEST)
 
   nixpkgs.config = {
     allowUnfree = true;
   };
 
-  environment.systemPackages = with pkgs; [
-    vim
-    wget
-    neovim
-    vscode
-    kitty
-    telegram-desktop
-    vesktop
-    waybar
-    walker
-    swww
-    zsh
-    zinit
-    fzf
-    tmux
-    wallust
-    mpv
-    obsidian
-    gcc
-    bluez
-    bluez-tools
-    wl-clipboard
-    busybox
-    dunst
-    git
-    brightnessctl
-    pavucontrol
-    bibata-cursors
-    qview
-    btop
-    nvtopPackages.amd
-    rocmPackages.rocm-smi
-    spotify
-    pulseaudio
-    yazi
-    rofi
-    rofimoji
-    lsd
-    networkmanagerapplet
-    file-roller
-    unzip
-    qbittorrent
-    qalculate-gtk
-    powertop
-    fastfetch
-    thunderbird
+  environment.systemPackages = with pkgs;
+    [
+      vim
+      wget
+      neovim
+      vscode
+      kitty
+      telegram-desktop
+      vesktop
+      waybar
+      walker
+      swww
+      zsh
+      zinit
+      fzf
+      tmux
+      wallust
+      mpv
+      obsidian
+      gcc
+      bluez
+      bluez-tools
+      wl-clipboard
+      busybox
+      dunst
+      git
+      brightnessctl
+      pavucontrol
+      bibata-cursors
+      qview
+      btop
+      nvtopPackages.amd
+      rocmPackages.rocm-smi
+      spotify
+      pulseaudio
+      yazi
+      rofi
+      rofimoji
+      lsd
+      networkmanagerapplet
+      file-roller
+      unzip
+      qbittorrent
+      qalculate-gtk
+      powertop
+      fastfetch
+      thunderbird
 
-    # Printing (For the guis)
-    hplipWithPlugin
+      # Printing, scanning
+      hplipWithPlugin
+      simple-scan
 
-    # Comms
-    wechat-uos
-    rustdesk
+      # Comms
+      wechat-uos
+      rustdesk
+      inetutils
 
-    # Secrets
-    bitwarden-desktop
+      # Secrets
+      bitwarden-desktop
 
-    # Wine
-    wineWowPackages.unstableFull
-    wineWowPackages.wayland
-    winetricks
+      # Wine
+      wineWowPackages.unstableFull
+      wineWowPackages.wayland
+      winetricks
 
-    # Networking
-    samba
-    cifs-utils
+      # Networking
+      samba
+      cifs-utils
 
-    # Packages for Niri
-    xwayland-satellite
-    labwc
+      # Packages for Niri
+      xwayland-satellite
+      labwc
 
-    # Packages that I need from hypr*
-    hyprpicker
+      # Packages that I need from hypr*
+      hyprpicker
 
-    # Drawing
-    inkscape-with-extensions
-    figma-linux
-    gimp
+      # Drawing
+      inkscape-with-extensions
+      figma-linux
+      gimp
 
-    # Editing
-    shotcut
-    gnome-text-editor
+      # Editing
+      shotcut
+      gnome-text-editor
 
-    # Utilities
-    wev
-    obs-studio
-    gparted
-    exfatprogs
-    ghostscript
-    sshfs
-    kalker
-    ffmpeg
-    zip
-    libwebp
+      # Utilities
+      wev
+      obs-studio
+      gparted
+      exfatprogs
+      ghostscript
+      sshfs
+      kalker
+      ffmpeg
+      zip
+      libwebp
+      ripgrep-all
+      file
 
-    # Dev
-    devenv
-    bun
-    nodejs
+      # Dev
+      zed-editor
+      devenv
+      bun
+      nodejs
+      mqttui
+      mqttx
 
-    # AI tools
-    codex
-    claude-code
+      # AI tools
+      codex
+      claude-code
 
-    # Gaming
-    prismlauncher
-    lutris
-    r2modman
+      # Gaming
+      prismlauncher
+      lutris
+      r2modman
 
-    # Themes
-    colloid-gtk-theme
-    colloid-icon-theme
-    adwaita-icon-theme
+      # Themes
+      colloid-gtk-theme
+      colloid-icon-theme
+      adwaita-icon-theme
 
-    google-chrome
+      google-chrome
 
-    # Office packages
-    libreoffice-fresh
-    hyphen
-    hyphenDicts.ru_RU
-    hunspell
-    hunspellDicts.ru_RU
+      # Office packages
+      libreoffice-fresh
+      hyphen
+      hyphenDicts.ru_RU
+      hunspell
+      hunspellDicts.ru_RU
 
-    # === Tmp packages - School ===
+      # === Tmp packages - School ===
 
-    # Android & Java dev
-    android-studio
-    android-tools
-    jetbrains.idea
+      # Android & Java dev
+      android-studio
+      android-tools
+      jetbrains.idea
 
-    # Flutter dev
-    libGLU
+      # Cisco
+      ciscoPacketTracer9
 
-    # Plantuml
-    plantuml
+      # Flutter dev
+      libGLU
 
-    # === Flakes ===
+      # Plantuml
+      plantuml
 
-    inputs.zen-browser.packages.${system}.default
-    inputs.nixCats.packages.${system}.nixCats
-    sddm-theme
-    sddm-theme.test
+      # === Flakes ===
 
-    inputs.oglgl.packages.${system}.default
-  ] ++
-  # Import all scripts from a directory and
-  # Add them as packages
-  builtins.map (scr: import scr {inherit pkgs config; }) (pkgs.lib.filesystem.listFilesRecursive ./scripts);
-  
+      inputs.zen-browser.packages.${system}.default
+      # inputs.nixCats.packages.${system}.nixCats
+      sddm-theme
+      sddm-theme.test
+
+      inputs.oglgl.packages.${system}.default
+    ]
+    ++
+    # Import all scripts from a directory and
+    # Add them as packages
+    builtins.map (scr: import scr {inherit pkgs config;}) (pkgs.lib.filesystem.listFilesRecursive ./scripts);
+
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
     XDG_CURRENT_DESKTOP = "niri";
@@ -353,10 +378,10 @@ in {
 
   nix = {
     settings = {
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = ["nix-command" "flakes"];
       auto-optimise-store = true;
 
-      trusted-users = [ "root" "komi" ];
+      trusted-users = ["root" "komi"];
     };
 
     gc = {
@@ -415,7 +440,7 @@ in {
     enable = true;
     keyboards = {
       default = {
-        ids = [ "*" ];
+        ids = ["*"];
         settings = {
           main = {
             capslock = "overload(control, esc)";
@@ -430,21 +455,30 @@ in {
     enable = true;
   };
 
-  # === Tmp Services ===
-  services.tomcat = {
+  services.tailscale = {
     enable = true;
+    extraUpFlags = [
+      "--accept-routes=true"
+      "--accept-dns=true"
+    ];
   };
 
   powerManagement.enable = true;
 
-  networking.firewall = { 
+  networking.firewall = {
     enable = false;
-    allowedTCPPortRanges = [ 
-      { from = 1714; to = 1764; } # KDE Connect
-    ];  
-    allowedUDPPortRanges = [ 
-      { from = 1714; to = 1764; } # KDE Connect
-    ];  
+    allowedTCPPortRanges = [
+      {
+        from = 1714;
+        to = 1764;
+      } # KDE Connect
+    ];
+    allowedUDPPortRanges = [
+      {
+        from = 1714;
+        to = 1764;
+      } # KDE Connect
+    ];
     checkReversePath = "loose";
   };
 

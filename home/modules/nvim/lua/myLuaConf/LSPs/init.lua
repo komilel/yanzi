@@ -153,6 +153,9 @@ require('lze').load {
   {
     "typescript-tools.nvim",
     for_cat = "typescript",
+    lsp = {
+      filetypes = { "javascript", "typescript", "javascriptreact", "typescriptreact"  },
+    },
     after = function()
       require("typescript-tools").setup({})
     end

@@ -19,24 +19,36 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixCats.url = "./home/modules/nvim/";
+    # nixCats.url = "./home/modules/nvim/";
+
+    nvf = {
+      url = "github:NotAShelf/nvf";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     oglgl.url = "github:wntkys/oglgl";
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }@inputs:
-    let
+  outputs = {
+    self,
+    nixpkgs,
+    home-manager,
+    nvf,
+    ...
+    } @ inputs: let
       system = "x86_64-linux";
     in {
       nixosConfigurations.Niko = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit self inputs system; };
+        specialArgs = {inherit self inputs system;};
         modules = [
+          nvf.nixosModules.default
           ./configuration.nix
-          home-manager.nixosModules.home-manager {
+          home-manager.nixosModules.home-manager
+          {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = { inherit inputs system; };
+            home-manager.extraSpecialArgs = {inherit inputs system;};
             home-manager.users.komi = ./home/home.nix;
           }
         ];

@@ -1,4 +1,10 @@
-{ config, pkgs, inputs, system, ... }: {
+{
+  config,
+  pkgs,
+  inputs,
+  system,
+  ...
+}: {
   imports = [
     # ./hyprland/hyprland.nix
     ./hyprland/hyprlock.nix
@@ -12,6 +18,7 @@
     ./wallust/wallust.nix
     ./rofi.nix
     ./vscode.nix
+    ./zed.nix
     ./dunst/dunst.nix
     ./git.nix
     ./tmux.nix

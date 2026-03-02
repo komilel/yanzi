@@ -21,6 +21,9 @@ if ok then
   end, { desc = "dismiss notify popup and clear hlsearch" })
 end
 
+--- Obtaining tokens for AI providers
+local tokens = require("myLuaConf.tokens")
+
 -- NOTE: you can check if you included the category with the thing wherever you want.
 if nixCats('general.extra') then
   -- I didnt want to bother with lazy loading this.
@@ -291,13 +294,6 @@ require('lze').load {
     end
   },
   {
-    "typescript-tools.nvim",
-    for_cat = "lsps.typescript",
-    after = function()
-      require("typescript-tools").setup {}
-    end
-  },
-  {
     "harpoon2",
     for_cat = "general.always",
     after = function ()
@@ -423,7 +419,6 @@ require('lze').load {
       { "<leader>a", nil, desc = "AI/Claude Code" },
       { "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
       { "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
-      { "<C-,>", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
       { "<leader>ar", "<cmd>ClaudeCode --resume<cr>", desc = "Resume Claude" },
       { "<leader>aC", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
       { "<leader>am", "<cmd>ClaudeCodeSelectModel<cr>", desc = "Select Claude model" },
@@ -450,27 +445,65 @@ require('lze').load {
             height = 0.9,
             border = "rounded",
             backdrop = 80,
-            keys = {
-              claude_hide = {
-                "<C-,>",
-                function(self)
-                  self:hide()
-                end,
-                mode = "t",
-                desc = "Hide",
-              },
-            },
           },
         },
       })
     end
   },
+
   {
     "snacks.nvim",
     for_cat = "ai.claude",
+    dep_of = "claudecode.nvim",
     after = function ()
       require("snacks").setup({
-        terminal = { enabled = true }
+        terminal = {
+          enabled = true,
+          keys = {
+            term_normal = {
+              "<C-,>",
+              function(self)
+                vim.cmd("stopinsert")
+              end,
+              mode = "t",
+              expr = true,
+              desc = "Ctrl+, to normal mode",
+            },
+          },
+        }
+      })
+    end
+  },
+
+  {
+    "codecompanion.nvim",
+    for_cat = "ai.codecompanion",
+    after = function ()
+      require("codecompanion").setup({
+        ignore_warnings = true,
+        interactions = {
+          chat = {
+            adapter = "codex"
+          },
+        },
+        adapters = {
+          acp = {
+            claude_code = function ()
+              return require("codecompanion.adapters").extend("claude_code", {
+                env = {
+                  CLAUDE_CODE_OAUTH_TOKEN = tokens.get_token("claude")
+                }
+              })
+            end,
+            codex = function()
+              return require("codecompanion.adapters").extend("codex", {
+                defaults = {
+                  auth_method = "chatgpt", -- "openai-api-key"|"codex-api-key"|"chatgpt"
+                },
+              })
+            end,
+          }
+        },
       })
     end
   }

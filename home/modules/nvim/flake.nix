@@ -43,6 +43,12 @@
     #   flake = false;
     # };
 
+    # "plugins-codecompanion" = {
+    #   # Release 17.33.0
+    #   url = "https://github.com/olimorris/codecompanion.nvim/commit/e7762c68daf24c3e356401f5223eeb5217047754";
+    #   flake = false;
+    # };
+
     # "plugins-vim-jukit" = {
     #   url = "github:luk400/vim-jukit";
     #   flake = false;
@@ -171,6 +177,11 @@
         format = with pkgs; [
         ];
 
+        codecompanion = with pkgs; [
+          claude-code-acp
+          codex-acp
+        ];
+
         neonixdev = {
           # also you can do this.
           inherit (pkgs) nix-doc lua-language-server nixd;
@@ -236,7 +247,7 @@
         lint = with pkgs.vimPlugins; [
           nvim-lint
         ];
-        languages = {
+        lsp = {
           typescript = with pkgs.vimPlugins; [
             typescript-tools-nvim
           ];
@@ -255,6 +266,9 @@
           claude = [ 
             claudecode-nvim
             snacks-nvim
+          ];
+          codecompanion = [ 
+            codecompanion-nvim
           ];
         };
         collab = with pkgs.vimPlugins; [
@@ -446,12 +460,15 @@
           python = true;
           typescript = true;
           clang = true;
+          bash = true;
           tailwindcss = true;
           html = true;
 
-          languages = {
-            typescript = true;
-          };
+          # Plugins that are lsp-like
+          lsp = true;
+
+          # AI
+          codecompanion = true;
 
           # this does not have an associated category of plugins, 
           # but lua can still check for it

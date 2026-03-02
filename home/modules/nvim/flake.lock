@@ -2,11 +2,11 @@
   "nodes": {
     "nixCats": {
       "locked": {
-        "lastModified": 1764009888,
-        "narHash": "sha256-hJekfTiW1792txgRSM4LcHnz1lDSY87LYbsJEn2V378=",
+        "lastModified": 1770584904,
+        "narHash": "sha256-9Zaz8lbKF2W9pwXZEnbiGsicHdBoU+dHt3Wv3mCJoZ8=",
         "owner": "BirdeeHub",
         "repo": "nixCats-nvim",
-        "rev": "16ac3281f322ea15d39843829e42a44d22da3715",
+        "rev": "538fdde784d2909700d97a8ef307783b33a86fb1",
         "type": "github"
       },
       "original": {
@@ -17,11 +17,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1765270179,
-        "narHash": "sha256-g2a4MhRKu4ymR4xwo+I+auTknXt/+j37Lnf0Mvfl1rE=",
+        "lastModified": 1771177547,
+        "narHash": "sha256-trTtk3WTOHz7hSw89xIIvahkgoFJYQ0G43IlqprFoMA=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "677fbe97984e7af3175b6c121f3c39ee5c8d62c9",
+        "rev": "ac055f38c798b0d87695240c7b761b82fc7e5bc2",
         "type": "github"
       },
       "original": {
@@ -31,27 +31,23 @@
         "type": "github"
       }
     },
-    "plugins-codex": {
+    "plugins-codecompanion": {
       "flake": false,
       "locked": {
-        "lastModified": 1763603761,
-        "narHash": "sha256-hvBsqLzV3oCVWK4Ll/YDrDhZSTjpvUjTpDQz6SFbtVo=",
-        "owner": "johnseth97",
-        "repo": "codex.nvim",
-        "rev": "e1149cbc875ff71ee21f8832b9fe815a270442b3",
-        "type": "github"
+        "narHash": "sha256-CnpdqwsNIwtG33YiRLuDDF9lksZhzI97OFwzPf6HLnc=",
+        "type": "file",
+        "url": "https://github.com/olimorris/codecompanion.nvim/commit/e7762c68daf24c3e356401f5223eeb5217047754"
       },
       "original": {
-        "owner": "johnseth97",
-        "repo": "codex.nvim",
-        "type": "github"
+        "type": "file",
+        "url": "https://github.com/olimorris/codecompanion.nvim/commit/e7762c68daf24c3e356401f5223eeb5217047754"
       }
     },
     "root": {
       "inputs": {
         "nixCats": "nixCats",
         "nixpkgs": "nixpkgs",
-        "plugins-codex": "plugins-codex"
+        "plugins-codecompanion": "plugins-codecompanion"
       }
     }
   },

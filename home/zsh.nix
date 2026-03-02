@@ -1,23 +1,29 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   programs.zsh = {
     enable = true;
 
-    shellAliases =
-      let
-        flakeDir = "~/yanzi";
-      in {
-        rbd = "sudo nixos-rebuild switch --flake ${flakeDir}";
-        rbdt = "sudo nixos-rebuild test --flake ${flakeDir}";
+    shellAliases = let
+      flakeDir = "~/yanzi";
+    in {
+      rbd = "sudo nixos-rebuild switch --flake ${flakeDir}";
+      rbdt = "sudo nixos-rebuild test --flake ${flakeDir}";
 
-        c = "clear";
-        sn = "shutdown now";
-        rb = "reboot";
-        lc = "lsd";
-        llc = "lsd -l";
-        lcc = "lsd -la";
+      c = "clear";
+      sn = "shutdown now";
+      rb = "reboot";
+      lc = "lsd";
+      llc = "lsd -l";
+      lcc = "lsd -la";
 
-        ts = "tmux-sessionizer";
-      };
+      v = "vim";
+
+      ts = "tmux-sessionizer";
+    };
 
     enableCompletion = true;
 
