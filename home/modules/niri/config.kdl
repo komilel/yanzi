@@ -2,7 +2,7 @@
 include "private.kdl"
 
 // Colors from wallust
-include "/home/komi/.cache/wallust/colors-niri.kdl"
+// include "/home/komi/.cache/wallust/colors-niri.kdl"
 
 // Input device configuration.
 input {
@@ -58,8 +58,12 @@ environment {
   GDK_BACKEND "wayland"
   // GDK_SCALE "2"
   // GDK_DISABLE "vulkan"
+  XDG_CURRENT_DESKTOP "niri"
+  QT_QPA_PLATFORM "wayland"
   QT_QPA_PLATFORMTHEME "gtk3"
+  QT_QPA_PLATFORMTHEME_QT6 "gtk3"
   QT_AUTO_SCREEN_SCALE_FACTOR "1"
+  ELECTRON_OZONE_PLATFORM_HINT "auto"
 }
 
 // Settings that influence how windows are positioned and sized.
@@ -217,11 +221,6 @@ switch-events {
 // See the binds section below for more spawn examples.
 
 // Autolaunch
-spawn-at-startup "waybar"
-spawn-at-startup "dunst"
-spawn-at-startup "swww-daemon"
-spawn-at-startup "hypridle"
-spawn-at-startup "nm-applet"
 spawn-sh-at-startup "gnome-keyring-daemon --start --components=secrets"
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
@@ -383,7 +382,6 @@ binds {
 
   // Apps
   Mod+Q hotkey-overlay-title="Open a Terminal: kitty" { spawn "kitty"; }
-  Mod+R hotkey-overlay-title="Run an Application: rofi" { spawn-sh "rofi -show drun -config ~/.config/rofi/drun.rasi"; }
   Mod+Alt+R hotkey-overlay-title="Run An Emoji Picker: rofimoji" { spawn-sh "rofimoji -a copy"; }
   Mod+B hotkey-overlay-title="Browser: zen" { spawn "zen-beta"; }
   Mod+E hotkey-overlay-title="File Manager: thunar" { spawn "thunar"; }
@@ -391,12 +389,63 @@ binds {
   Mod+S hotkey-overlay-title="Open Spotify" { spawn "spotify"; }
   Mod+Z hotkey-overlay-title="Open Zed: Code editor" { spawn "zeditor"; }
 
+  // DMS
+  // Application Launchers
+  Mod+R hotkey-overlay-title="Application Launcher" {
+    spawn "dms" "ipc" "call" "spotlight" "toggle";
+  }
+  Mod+Alt+V hotkey-overlay-title="Clipboard Manager" {
+    spawn "dms" "ipc" "call" "clipboard" "toggle";
+  }
+  Mod+M hotkey-overlay-title="Task Manager" {
+    spawn "dms" "ipc" "call" "processlist" "focusOrToggle";
+  }
+  Mod+Slash hotkey-overlay-title="Settings" {
+    spawn "dms" "ipc" "call" "settings" "focusOrToggle";
+  }
+  Mod+N hotkey-overlay-title="Notification Center" {
+    spawn "dms" "ipc" "call" "notifications" "toggle";
+  }
+  Mod+Y hotkey-overlay-title="Browse Wallpapers" {
+    spawn "dms" "ipc" "call" "dankdash" "wallpaper";
+  }
+
+  // Music
+  Mod+Alt+N hotkey-overlay-title="Music Player: Next" {
+    spawn "dms" "ipc" "call" "mpris" "next"
+  }
+  Mod+Alt+M hotkey-overlay-title="Music Player: Next" {
+    spawn "dms" "ipc" "call" "mpris" "previous"
+  }
+
+  // Security
+  Mod+Alt+L hotkey-overlay-title="Lock Screen" {
+    spawn "dms" "ipc" "call" "lock" "lock";
+  }
+
+  // Audio Controls
+  // XF86AudioRaiseVolume allow-when-locked=true {
+  //   spawn "dms" "ipc" "call" "audio" "increment" "3";
+  // }
+  // XF86AudioLowerVolume allow-when-locked=true {
+  //   spawn "dms" "ipc" "call" "audio" "decrement" "3";
+  // }
+  // XF86AudioMute allow-when-locked=true {
+  //   spawn "dms" "ipc" "call" "audio" "mute";
+  // }
+
+  // Brightness Controls
+  XF86MonBrightnessUp allow-when-locked=true {
+    spawn "dms" "ipc" "call" "brightness" "increment" "5" "";
+  }
+  XF86MonBrightnessDown allow-when-locked=true {
+    spawn "dms" "ipc" "call" "brightness" "decrement" "5" "";
+  }
+
   // Utilities
   Mod+Shift+W { spawn-sh "wallpaper select"; }
   Mod+Alt+W { spawn-sh "wallpaper random"; }
   Mod+Shift+A { spawn-sh "hyprpicker -al"; }
-
-  Super+Alt+L hotkey-overlay-title="Lock the Screen: hyprlock" { spawn "hyprlock"; }
 
   // Example volume keys mappings for PipeWire & WirePlumber.
   // The allow-when-locked=true property makes them work even when the session is locked.
@@ -409,8 +458,8 @@ binds {
   // Example brightness key mappings for brightnessctl.
   // You can use regular spawn with multiple arguments too (to avoid going through "sh"),
   // but you need to manually put each argument in separate "" quotes.
-  XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
-  XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+  // XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
+  // XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
 
   // Open/close the Overview: a zoomed-out view of workspaces and windows.
   // You can also move the mouse into the top-left hot corner,

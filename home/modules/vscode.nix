@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{pkgs, ...}: {
   programs.vscode = {
     enable = true;
 
@@ -35,6 +35,9 @@
           # Flutter
           dart-code.dart-code
           dart-code.flutter
+
+          # AI
+          anthropic.claude-code
         ];
       };
     };

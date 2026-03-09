@@ -35,23 +35,25 @@
     home-manager,
     nvf,
     ...
-    } @ inputs: let
-      system = "x86_64-linux";
-    in {
-      nixosConfigurations.Niko = nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = {inherit self inputs system;};
-        modules = [
-          nvf.nixosModules.default
-          ./configuration.nix
-          home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.extraSpecialArgs = {inherit inputs system;};
-            home-manager.users.komi = ./home/home.nix;
-          }
-        ];
-      };
+  } @ inputs: let
+    system = "x86_64-linux";
+  in {
+    nixosConfigurations.Niko = nixpkgs.lib.nixosSystem {
+      inherit system;
+      specialArgs = {inherit self inputs system;};
+      modules = [
+        nvf.nixosModules.default
+
+        ./configuration.nix
+
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = {inherit inputs system;};
+          home-manager.users.komi = ./home/home.nix;
+        }
+      ];
     };
+  };
 }

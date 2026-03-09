@@ -16,10 +16,16 @@ in {
     ./nvim/configuration.nix
   ];
 
-  # Use the systemd-boot EFI boot loader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = ["ntfs"];
+  boot = {
+    loader = {
+      systemd-boot.enable = true;
+      efi = {
+        canTouchEfiVariables = true;
+        efiSysMountPoint = "/boot";
+      };
+    };
+    supportedFilesystems = ["ntfs"];
+  };
 
   networking.hostName = "Niko";
 
@@ -82,8 +88,6 @@ in {
     pulse.enable = true;
   };
 
-  services.blueman.enable = true;
-
   # Enable touchpad support (enabled default in most desktopManager).
   services.libinput.enable = true;
 
@@ -129,6 +133,7 @@ in {
     enable32Bit = true;
   };
 
+  # Scanning
   hardware.sane = {
     enable = true;
     extraBackends = [pkgs.hplipWithPlugin];
@@ -176,7 +181,7 @@ in {
       openFirewall = true;
     };
 
-    # For ciscoPacketTracer8
+    # For ciscoPacketTracer9
     firejail = {
       enable = true;
       wrappedBinaries = {
@@ -202,7 +207,29 @@ in {
     };
   };
 
-  # Shell (TEST)
+  # Shell
+  programs.dms-shell = {
+    enable = true;
+
+    systemd = {
+      enable = true; # Systemd service for auto-start
+      restartIfChanged = true; # Auto-restart dms.service when dms-shell changes
+    };
+
+    # Core features
+    enableSystemMonitoring = true; # System monitoring widgets (dgop)
+    enableVPN = true; # VPN management widget
+    enableDynamicTheming = true; # Wallpaper-based theming (matugen)
+    enableAudioWavelength = true; # Audio visualizer (cava)
+    enableCalendarEvents = false; # Calendar integration (khal)
+    enableClipboardPaste = true; # Pasting from the clipboard history (wtype)
+  };
+
+  programs.nix-ld.enable = true;
+  programs.nix-ld.libraries = with pkgs; [
+    # Add any missing dynamic libraries for unpackaged programs
+    # here, NOT in environment.systemPackages
+  ];
 
   nixpkgs.config = {
     allowUnfree = true;
@@ -247,7 +274,7 @@ in {
       rofi
       rofimoji
       lsd
-      networkmanagerapplet
+      # networkmanagerapplet
       file-roller
       unzip
       qbittorrent
@@ -348,6 +375,9 @@ in {
       # Cisco
       ciscoPacketTracer9
 
+      # CSharp
+      dotnet-sdk_10
+
       # Flutter dev
       libGLU
 
@@ -407,30 +437,33 @@ in {
 
   services.gnome.gnome-keyring.enable = true;
 
-  services.tlp = {
-    enable = true;
-    settings = {
-      CPU_SCALING_GOVERNOR_ON_AC = "performance";
-      CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+  services.upower.enable = true;
 
-      CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
-      CPU_ENERGY_PERF_POLICY_ON_BAT = "balance_power";
-
-      CPU_BOOST_ON_AC = 1;
-      CPU_BOOST_ON_BAT = 0;
-
-      CPU_SCALING_MIN_FREQ_ON_AC = 400000;
-      CPU_SCALING_MAX_FREQ_ON_AC = 4785000;
-      CPU_SCALING_MIN_FREQ_ON_BAT = 400000;
-      CPU_SCALING_MAX_FREQ_ON_BAT = 3285000;
-
-      # Optional helps save long term battery health
-      START_CHARGE_THRESH_BAT0 = 40;
-      STOP_CHARGE_THRESH_BAT0 = 80;
-
-      USB_AUTOSUSPEND = 0;
-    };
-  };
+  # BUG: Conflicts with dms?
+  # services.tlp = {
+  #   enable = true;
+  #   settings = {
+  #     CPU_SCALING_GOVERNOR_ON_AC = "performance";
+  #     CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+  #
+  #     CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
+  #     CPU_ENERGY_PERF_POLICY_ON_BAT = "balance_power";
+  #
+  #     CPU_BOOST_ON_AC = 1;
+  #     CPU_BOOST_ON_BAT = 0;
+  #
+  #     CPU_SCALING_MIN_FREQ_ON_AC = 400000;
+  #     CPU_SCALING_MAX_FREQ_ON_AC = 4785000;
+  #     CPU_SCALING_MIN_FREQ_ON_BAT = 400000;
+  #     CPU_SCALING_MAX_FREQ_ON_BAT = 3285000;
+  #
+  #     # Optional helps save long term battery health
+  #     START_CHARGE_THRESH_BAT0 = 40;
+  #     STOP_CHARGE_THRESH_BAT0 = 80;
+  #
+  #     USB_AUTOSUSPEND = 0;
+  #   };
+  # };
 
   services.thermald.enable = true;
 
@@ -486,6 +519,8 @@ in {
   # (/run/current-system/configuration.nix). This is useful in case you
   # accidentally delete configuration.nix.
   # system.copySystemConfiguration = true;
+
+  system.nixos.label = "Niko";
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
