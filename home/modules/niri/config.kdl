@@ -66,6 +66,19 @@ environment {
   ELECTRON_OZONE_PLATFORM_HINT "auto"
 }
 
+overview {
+    zoom 0.3
+    backdrop-color "#001514"
+
+    workspace-shadow {
+        // off
+        softness 50
+        spread 15
+        offset x=10 y=10
+        color "#7180B950"
+    }
+}
+
 // Settings that influence how windows are positioned and sized.
 // Find more information on the wiki:
 // https://yalter.github.io/niri/Configuration:-Layout
@@ -265,6 +278,7 @@ window-rule {
 
 window-rule {
   match app-id=r#"code$"#
+  match app-id=r#"zed"#
   opacity 0.95
   draw-border-with-background false
 }
@@ -673,7 +687,7 @@ binds {
   Mod+Shift+P { power-off-monitors; }
 
   // Dynamic cast target
-  Mod+A { set-dynamic-cast-monitor; }
+  Mod+A { set-dynamic-cast-window; }
   Mod+Ctrl+A { clear-dynamic-cast-target; }
 }
 

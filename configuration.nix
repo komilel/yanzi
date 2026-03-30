@@ -25,6 +25,7 @@ in {
       };
     };
     supportedFilesystems = ["ntfs"];
+    kernel.sysctl."fs.inotify.max_user_watches" = 1048576;
   };
 
   networking.hostName = "Niko";
@@ -143,7 +144,7 @@ in {
   users.users.komi = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = ["wheel" "kvm" "adbusers" "scanner" "lp"];
+    extraGroups = ["wheel" "adbusers" "scanner" "lp"];
   };
 
   programs = {
@@ -274,7 +275,6 @@ in {
       rofi
       rofimoji
       lsd
-      # networkmanagerapplet
       file-roller
       unzip
       qbittorrent
@@ -296,8 +296,8 @@ in {
       bitwarden-desktop
 
       # Wine
-      wineWowPackages.unstableFull
-      wineWowPackages.wayland
+      wineWow64Packages.unstableFull
+      wineWow64Packages.wayland
       winetricks
 
       # Networking
@@ -332,13 +332,24 @@ in {
       zip
       libwebp
       ripgrep-all
+      ripgrep
       file
+
+      # VPN Utilities
+      qrencode
+      wireguard-tools
 
       # Dev
       zed-editor
       devenv
+      gitkraken
+      lazygit
+
+      # Dev - js
       bun
       nodejs
+
+      # Dev - protocols
       mqttui
       mqttx
 
@@ -364,6 +375,7 @@ in {
       hyphenDicts.ru_RU
       hunspell
       hunspellDicts.ru_RU
+      # onlyoffice-desktopeditors
 
       # === Tmp packages - School ===
 
@@ -396,7 +408,7 @@ in {
     ++
     # Import all scripts from a directory and
     # Add them as packages
-    builtins.map (scr: import scr {inherit pkgs config;}) (pkgs.lib.filesystem.listFilesRecursive ./scripts);
+    map (scr: import scr {inherit pkgs config;}) (pkgs.lib.filesystem.listFilesRecursive ./scripts);
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
@@ -404,7 +416,14 @@ in {
     XDG_SESSION_TYPE = "wayland";
     XDG_SESSION_DESKTOP = "niri";
     EDITOR = "nvim";
+    DICPATH = "/run/current-system/sw/share/hunspell:/run/current-system/sw/share/hyphen";
   };
+
+  environment.pathsToLink = [
+    "/share/hunspell"
+    "/share/myspell"
+    "/share/hyphen"
+  ];
 
   nix = {
     settings = {
@@ -520,7 +539,7 @@ in {
   # accidentally delete configuration.nix.
   # system.copySystemConfiguration = true;
 
-  system.nixos.label = "Niko";
+  # system.nixos.label = "Niko";
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.

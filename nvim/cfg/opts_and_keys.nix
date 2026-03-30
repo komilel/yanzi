@@ -103,8 +103,12 @@
         mode = "n";
         action = ''
           function()
-            local new_config = not vim.diagnostic.config().virtual_text
-            vim.diagnostic.config({ virtual_text = new_config })
+            local current = vim.diagnostic.config().virtual_text
+            if current then
+              vim.diagnostic.config({ virtual_text = false })
+            else
+              vim.diagnostic.config({ virtual_text = { spacing = 2, prefix = "●" } })
+            end
           end
         '';
         desc = "[D]iagnostic [V]irtual Text Toggle";
@@ -158,6 +162,54 @@
         action = "vim.diagnostic.open_float";
         desc = "Open floating diagnostic message";
         lua = true;
+      }
+
+      # Moving from pane to pane
+      {
+        key = "<C-h>";
+        mode = "n";
+        action = "<C-w>h";
+        desc = "Navigate left";
+      }
+      {
+        key = "<C-j>";
+        mode = "n";
+        action = "<C-w>j";
+        desc = "Navigate down";
+      }
+      {
+        key = "<C-k>";
+        mode = "n";
+        action = "<C-w>k";
+        desc = "Navigate up";
+      }
+      {
+        key = "<C-l>";
+        mode = "n";
+        action = "<C-w>l";
+        desc = "Navigate right";
+      }
+
+      # Resizing splits
+      {
+        key = "<M-k>";
+        action = "<cmd>resize +5<CR>";
+        mode = "n";
+      }
+      {
+        key = "<M-j>";
+        action = "<cmd>resize -5<CR>";
+        mode = "n";
+      }
+      {
+        key = "<M-h>";
+        action = "<cmd>vertical resize +5<CR>";
+        mode = "n";
+      }
+      {
+        key = "<M-l>";
+        action = "<cmd>vertical resize -5<CR>";
+        mode = "n";
       }
     ];
   };

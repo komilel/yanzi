@@ -20,6 +20,9 @@
       llc = "lsd -l";
       lcc = "lsd -la";
 
+      # Git
+      lzg = "lazygit";
+
       v = "vim";
 
       ts = "tmux-sessionizer";

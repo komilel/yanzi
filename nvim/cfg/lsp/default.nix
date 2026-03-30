@@ -3,6 +3,10 @@
   lib,
   ...
 }: {
+  imports = [
+    ./overload.nix
+  ];
+
   programs.nvf.settings.vim = {
     lsp = {
       enable = true;
@@ -15,12 +19,12 @@
         listDocumentSymbols = "<leader>ds";
         listImplementations = "gI";
         listReferences = "gr";
-        listWorkspaceFolders = "<leader>wl";
-        listWorkspaceSymbols = "<leader>ws";
+        listWorkspaceFolders = "<leader>lwf";
+        listWorkspaceSymbols = "<leader>lws";
         nextDiagnostic = "]d";
         previousDiagnostic = "[d";
         openDiagnosticFloat = "<leader>e";
-        removeWorkspaceFolder = "<leader>wr";
+        removeWorkspaceFolder = "<leader>lwr";
         renameSymbol = "<leader>rn";
         signatureHelp = "<leader>ls";
         toggleFormatOnSave = "<leader>lf";
@@ -43,6 +47,51 @@
       };
 
       otter-nvim.enable = true;
+    };
+
+    lazy.plugins = with pkgs.vimPlugins; {
+      "glance.nvim" = {
+        enabled = true;
+        package = glance-nvim;
+        cmd = "Glance";
+
+        setupModule = "glance";
+        setupOpts = {
+          border = {
+            enable = true;
+          };
+        };
+
+        keys = [
+          {
+            key = "gpd";
+            mode = "n";
+            action = "<cmd>Glance definitions<cr>";
+            desc = "Glance: definitions";
+          }
+
+          {
+            key = "gpr";
+            mode = "n";
+            action = "<cmd>Glance references<cr>";
+            desc = "Glance: references";
+          }
+
+          {
+            key = "gpt";
+            mode = "n";
+            action = "<cmd>Glance type_definitions<cr>";
+            desc = "Glance: types";
+          }
+
+          {
+            key = "gpi";
+            mode = "n";
+            action = "<cmd>Glance implementations<cr>";
+            desc = "Glance: implementations";
+          }
+        ];
+      };
     };
   };
 }

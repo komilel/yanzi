@@ -9,6 +9,8 @@
     ./cfg/languages/default.nix
     ./cfg/autocmds.nix
     ./cfg/opts_and_keys.nix
+    ./cfg/plugins/default.nix
+    ./cfg/theme.nix
   ];
 
   programs.nvf = {
@@ -19,10 +21,10 @@
         ./cfgLua
       ];
 
+      diagnostics.enable = true;
       diagnostics.config = {
         underline = true;
         virtual_text = {
-          enable = true;
           spacing = 2;
           prefix = "\●";
         };
@@ -38,158 +40,6 @@
              [vim.diagnostic.severity.INFO] = " ",
             }
           '';
-        };
-      };
-
-      extraPackages = with pkgs; [
-        # For codecompanion (ai)
-        codex-acp
-        claude-code-acp
-      ];
-
-      optPlugins = with pkgs.vimPlugins; [
-        # AI
-        claudecode-nvim
-        "snacks-nvim"
-        "codecompanion-nvim"
-      ];
-
-      lazy.plugins = with pkgs.vimPlugins; {
-        telescope = {
-          enabled = true;
-          package = "telescope";
-          keys = [
-            {
-              key = "<leader>sf";
-              mode = "n";
-              action = "function() return require('telescope.builtin').find_files() end";
-              desc = "[S]earch [F]iles";
-              lua = true;
-            }
-
-            {
-              key = "<leader>sg";
-              mode = "n";
-              action = "function() return require('telescope.builtin').live_grep() end";
-              desc = "[S]earch by [G]rep";
-              lua = true;
-            }
-
-            {
-              key = "<leader>sk";
-              mode = "n";
-              action = "function() return require('telescope.builtin').keymaps() end";
-              desc = "[S]earch [K]eymaps";
-              lua = true;
-            }
-          ];
-        };
-
-        # AI
-        "claudecode.nvim" = {
-          enabled = true;
-          package = claudecode-nvim;
-
-          setupModule = "claudecode";
-          setupOpts = {
-            terminal = {
-              snacks_win_opts = {
-                position = "float";
-                width = 0.9;
-                height = 0.9;
-                border = "rounded";
-                backdrop = 80;
-              };
-            };
-          };
-
-          keys = [
-            {
-              key = "<leader>ac";
-              mode = "n";
-              action = "<cmd>ClaudeCode<CR>";
-              desc = "AI: Toggle claude";
-            }
-
-            {
-              key = "<leader>af";
-              mode = "n";
-              action = "<cmd>ClaudeCodeFocus<CR>";
-              desc = "AI: Focus claude";
-            }
-
-            {
-              key = "<leader>am";
-              mode = "n";
-              action = "<cmd>ClaudeCodeSelectModel<CR>";
-              desc = "AI: Select claude model";
-            }
-
-            {
-              key = "<leader>as";
-              mode = "v";
-              action = "<cmd>ClaudeCodeSend<CR>";
-              desc = "AI: Send to claude";
-            }
-
-            {
-              key = "<leader>aa";
-              mode = "v";
-              action = "<cmd>ClaudeCodeDiffAccept<CR>";
-              desc = "AI: Accept diff";
-            }
-
-            {
-              key = "<leader>ad";
-              mode = "v";
-              action = "<cmd>ClaudeCodeDiffDeny<CR>";
-              desc = "AI: Deny diff";
-            }
-          ];
-        };
-
-        snacks-nvim = {
-          enabled = true;
-          package = "snacks-nvim";
-
-          setupModule = "snacks";
-          setupOpts = {terminal = {enabled = true;};};
-        };
-
-        # Code companion?
-        codecompanion-nvim = {
-          enabled = true;
-          package = "codecompanion-nvim";
-
-          setupModule = "codecompanion";
-          setupOpts = {
-            ignore_warnings = true;
-            interactions = {
-              chat = {
-                adapter = "codex";
-              };
-            };
-            adapters = {
-              acp = {
-                claude_code = lib.generators.mkLuaInline ''                  function ()
-                                return require("codecompanion.adapters").extend("claude_code", {
-                                  env = {
-                                    CLAUDE_CODE_OAUTH_TOKEN = require("komi.tokens").get_token("claude")
-                                  }
-                                })
-                              end'';
-                codex = lib.mkLuaInline ''                  function()
-                                return require("codecompanion.adapters").extend("codex", {
-                                  defaults = {
-                                    auth_method = "chatgpt", -- "openai-api-key"|"codex-api-key"|"chatgpt"
-                                  },
-                                })
-                              end'';
-              };
-            };
-          };
-
-          # keys = {};
         };
       };
 
@@ -226,13 +76,6 @@
             ''{ "", draw_empty = true, separator = { left = '', right = '' } } ''
           ];
         };
-      };
-
-      theme = {
-        enable = true;
-        name = "catppuccin";
-        style = "macchiato";
-        transparent = true;
       };
 
       autopairs.nvim-autopairs.enable = true;
@@ -297,8 +140,6 @@
         cheatsheet.enable = true;
       };
 
-      telescope.enable = true;
-
       git = {
         enable = true;
         gitsigns.enable = true;
@@ -323,14 +164,27 @@
 
       utility = {
         ccc.enable = false;
+
         vim-wakatime.enable = false;
+
         diffview-nvim.enable = true;
+
         yanky-nvim.enable = false;
+
         # icon-picker.enable = isMaximal;
-        surround.enable = true;
+
+        surround = {
+          enable = true;
+          setupOpts = {};
+          useVendoredKeybindings = false;
+        };
+
         leetcode-nvim.enable = false;
+
         multicursors.enable = false;
-        smart-splits.enable = true;
+
+        smart-splits.enable = false;
+
         undotree.enable = true;
 
         oil-nvim = {
