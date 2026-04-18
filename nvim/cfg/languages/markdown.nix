@@ -15,6 +15,7 @@
             enable = true;
 
             setupOpts = {
+              preset = "lazy";
               heading = {
                 sign = false;
                 icons = [];

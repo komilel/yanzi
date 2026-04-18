@@ -9,6 +9,11 @@
   ];
 
   programs.nvf.settings.vim = {
+    extraPackages = with pkgs; [
+      # For gopls
+      go
+    ];
+
     languages = {
       enableFormat = true;
       enableTreesitter = true;

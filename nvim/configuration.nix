@@ -68,7 +68,7 @@
       statusline = {
         lualine = {
           enable = true;
-          theme = "catppuccin";
+          theme = "auto";
 
           activeSection.b = [
             ''{ "filetype", colored = true, icon_only = true, icon = { align = 'left' } } ''

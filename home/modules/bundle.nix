@@ -6,10 +6,6 @@
   ...
 }: {
   imports = [
-    # ./hyprland/hyprland.nix
-    # ./hyprland/hyprlock.nix
-    # ./hyprland/hypridle.nix
-    # ./waybar/waybar.nix
     ./niri.nix
     ./gtk.nix
     ./zoxide.nix
@@ -19,8 +15,8 @@
     ./rofi.nix
     ./vscode.nix
     ./zed.nix
-    # ./dunst/dunst.nix
     ./git.nix
     ./tmux.nix
+    ./proxy.nix
   ];
 }

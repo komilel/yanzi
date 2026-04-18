@@ -27,6 +27,11 @@
     };
 
     oglgl.url = "github:wntkys/oglgl";
+
+    happ = {
+      url = "./programs/happ";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -43,6 +48,8 @@
       specialArgs = {inherit self inputs system;};
       modules = [
         nvf.nixosModules.default
+
+        inputs.happ.nixosModules.default
 
         ./configuration.nix
 

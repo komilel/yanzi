@@ -7,7 +7,7 @@
     extraPackages = with pkgs; [
       # For codecompanion (ai)
       codex-acp
-      claude-code-acp
+      claude-agent-acp
     ];
 
     startPlugins = with pkgs.vimPlugins; [
@@ -97,7 +97,6 @@
           interactions = {
             chat = {
               adapter = "claude_code";
-              model = "opus";
 
               keymaps = {
                 paste_image = {
@@ -132,18 +131,21 @@
 
           adapters = {
             acp = {
-              claude_code = lib.generators.mkLuaInline ''                function ()
-                              return require("codecompanion.adapters").extend("claude_code", {
-                                commands = {
-                                  default = {
-                                    "claude-code-acp"
-                                  },
-                                },
-                                env = {
-                                  CLAUDE_CODE_OAUTH_TOKEN = require("komi.tokens").get_token("claude")
-                                }
-                              })
-                            end'';
+              claude_code = lib.generators.mkLuaInline ''                      function ()
+                return require("codecompanion.adapters").extend("claude_code", {
+                  defaults = {
+                    model = "opus"
+                  },
+                  commands = {
+                    default = {
+                      "claude-agent-acp"
+                    },
+                  },
+                  env = {
+                    CLAUDE_CODE_OAUTH_TOKEN = require("komi.tokens").get_token("claude")
+                  }
+                })
+                end'';
               codex = lib.generators.mkLuaInline ''                function()
                               return require("codecompanion.adapters").extend("codex", {
                                 defaults = {
@@ -213,8 +215,8 @@
                 title_generation_opts = {
                   adapter = "gemini";
                   model = "gemini-2.5-flash";
-                  refresh_every_n_prompts = 0;
-                  max_refreshes = 3;
+                  refresh_every_n_prompts = 5;
+                  max_refreshes = 5;
                 };
               };
             };

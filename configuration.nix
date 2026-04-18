@@ -14,6 +14,10 @@ in {
   imports = [
     ./hardware-configuration.nix
     ./nvim/configuration.nix
+    ./virt.nix
+
+    ./modules/cproxy
+    ./modules/urix
   ];
 
   boot = {
@@ -182,6 +186,10 @@ in {
       openFirewall = true;
     };
 
+    # VPN
+    cproxy.enable = true;
+    urix.enable = true;
+
     # For ciscoPacketTracer9
     firejail = {
       enable = true;
@@ -207,6 +215,22 @@ in {
       };
     };
   };
+
+  security.sudo.extraRules = [
+    {
+      users = ["komi"];
+      commands = [
+        {
+          command = "/run/current-system/sw/bin/ip";
+          options = ["NOPASSWD"];
+        }
+        {
+          command = "/run/current-system/sw/bin/cproxy";
+          options = ["NOPASSWD" "SETENV"];
+        }
+      ];
+    }
+  ];
 
   # Shell
   programs.dms-shell = {
@@ -245,9 +269,6 @@ in {
       kitty
       telegram-desktop
       vesktop
-      waybar
-      walker
-      swww
       zsh
       zinit
       fzf
@@ -260,7 +281,6 @@ in {
       bluez-tools
       wl-clipboard
       busybox
-      dunst
       git
       brightnessctl
       pavucontrol
@@ -287,8 +307,10 @@ in {
       hplipWithPlugin
       simple-scan
 
+      # Launcher
+      walker
+
       # Comms
-      wechat-uos
       rustdesk
       inetutils
 
@@ -338,6 +360,7 @@ in {
       # VPN Utilities
       qrencode
       wireguard-tools
+      xray
 
       # Dev
       zed-editor
@@ -404,6 +427,8 @@ in {
       sddm-theme.test
 
       inputs.oglgl.packages.${system}.default
+
+      inputs.happ.packages.${system}.default
     ]
     ++
     # Import all scripts from a directory and
@@ -417,6 +442,10 @@ in {
     XDG_SESSION_DESKTOP = "niri";
     EDITOR = "nvim";
     DICPATH = "/run/current-system/sw/share/hunspell:/run/current-system/sw/share/hyphen";
+
+    # Proxy envvars
+    HTTP_PROXY = "http://127.0.0.1:10809";
+    HTTPS_PROXY = "http://127.0.0.1:10809";
   };
 
   environment.pathsToLink = [
@@ -514,6 +543,13 @@ in {
       "--accept-dns=true"
     ];
   };
+
+  # Proxy/vpn
+  services.happd.enable = true;
+  # services.v2raya = {
+  #   enable = true;
+  #   cliPackage = pkgs.xray;
+  # };
 
   powerManagement.enable = true;
 

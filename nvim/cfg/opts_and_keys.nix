@@ -116,6 +116,18 @@
       }
 
       {
+        key = "<leader>li";
+        mode = "n";
+        action = ''
+          function()
+            vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+          end
+        '';
+        desc = "[L]sp [I]nlay Hints Toggle";
+        lua = true;
+      }
+
+      {
         key = "<leader>y";
         mode = ["n" "x" "v"];
         action = "\"+y";

@@ -36,6 +36,8 @@
 
       lspsaga.enable = false;
 
+      inlayHints.enable = true;
+
       trouble = {
         enable = true;
         mappings = {
