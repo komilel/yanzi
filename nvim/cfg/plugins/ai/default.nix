@@ -12,7 +12,6 @@
 
     startPlugins = with pkgs.vimPlugins; [
       # AI (CodeCompanion)
-      codecompanion-history-nvim
       codecompanion-spinner-nvim
       codecompanion-lualine-nvim
     ];
@@ -193,7 +192,7 @@
 
           extensions = {
             history = {
-              enabled = true;
+              enabled = false;
               opts = {
                 picker = "telescope";
                 picker_keymaps = {
@@ -211,13 +210,13 @@
                   };
                 };
 
-                auto_generate_title = true;
-                title_generation_opts = {
-                  adapter = "gemini";
-                  model = "gemini-2.5-flash";
-                  refresh_every_n_prompts = 5;
-                  max_refreshes = 5;
-                };
+                # auto_generate_title = true;
+                # title_generation_opts = {
+                #   adapter = "gemini";
+                #   model = "gemini-2.5-flash";
+                #   refresh_every_n_prompts = 5;
+                #   max_refreshes = 5;
+                # };
               };
             };
 

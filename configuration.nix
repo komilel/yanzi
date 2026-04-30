@@ -148,7 +148,7 @@ in {
   users.users.komi = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = ["wheel" "adbusers" "scanner" "lp"];
+    extraGroups = ["wheel" "adbusers" "scanner" "lp" "docker"];
   };
 
   programs = {
@@ -216,6 +216,17 @@ in {
     };
   };
 
+  programs.nix-ld.enable = true;
+
+  programs.nix-ld.libraries = with pkgs; [
+    libcap
+    stdenv.cc.cc
+    zlib
+    openssl
+  ];
+
+  virtualisation.docker.enable = true;
+
   security.sudo.extraRules = [
     {
       users = ["komi"];
@@ -249,12 +260,6 @@ in {
     enableCalendarEvents = false; # Calendar integration (khal)
     enableClipboardPaste = true; # Pasting from the clipboard history (wtype)
   };
-
-  programs.nix-ld.enable = true;
-  programs.nix-ld.libraries = with pkgs; [
-    # Add any missing dynamic libraries for unpackaged programs
-    # here, NOT in environment.systemPackages
-  ];
 
   nixpkgs.config = {
     allowUnfree = true;
@@ -379,6 +384,7 @@ in {
       # AI tools
       codex
       claude-code
+      gemini-cli
 
       # Gaming
       prismlauncher

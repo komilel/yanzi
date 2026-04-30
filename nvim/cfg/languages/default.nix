@@ -43,8 +43,6 @@
 
       ts.enable = true;
 
-      tailwind.enable = true;
-
       go.enable = true;
 
       lua.enable = true;

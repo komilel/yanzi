@@ -49,6 +49,8 @@
       };
 
       otter-nvim.enable = true;
+
+      presets.tailwindcss-language-server.enable = true;
     };
 
     lazy.plugins = with pkgs.vimPlugins; {

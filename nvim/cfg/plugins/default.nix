@@ -5,6 +5,7 @@
 }: {
   imports = [
     ./ai/default.nix
+    ./plantuml.nix
   ];
 
   programs.nvf.settings.vim = {
