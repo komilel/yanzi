@@ -7,8 +7,15 @@
     languages = {
       markdown = {
         enable = true;
+
         treesitter.enable = true;
+
         lsp.enable = true;
+
+        format = {
+          enable = true;
+          type = ["prettierd"];
+        };
 
         extensions = {
           render-markdown-nvim = {

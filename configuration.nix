@@ -189,31 +189,6 @@ in {
     # VPN
     cproxy.enable = true;
     urix.enable = true;
-
-    # For ciscoPacketTracer9
-    firejail = {
-      enable = true;
-      wrappedBinaries = {
-        packettracer9 = {
-          executable = lib.getExe pkgs.ciscoPacketTracer9;
-
-          # Will still want a .desktop entry as the package is not directly added
-          desktop = "${pkgs.ciscoPacketTracer9}/share/applications/cisco-packet-tracer-9.desktop";
-
-          extraArgs = [
-            # This should make it run in isolated netns, preventing internet access
-            "--net=none"
-
-            # firejail is only needed for network isolation so no futher profile is needed
-            "--noprofile"
-
-            # Packet tracer doesn't play nice with dark QT themes so this
-            # should unset the theme. Uncomment if you have this issue.
-            # ''--env=QT_STYLE_OVERRIDE=""''
-          ];
-        };
-      };
-    };
   };
 
   programs.nix-ld.enable = true;
@@ -279,7 +254,7 @@ in {
       fzf
       tmux
       wallust
-      mpv
+      mpv-unwrapped
       obsidian
       gcc
       bluez
@@ -316,7 +291,6 @@ in {
       walker
 
       # Comms
-      rustdesk
       inetutils
 
       # Secrets
@@ -342,6 +316,7 @@ in {
       inkscape-with-extensions
       figma-linux
       gimp
+      drawio
 
       # Editing
       shotcut
@@ -388,7 +363,6 @@ in {
 
       # Gaming
       prismlauncher
-      lutris
       r2modman
 
       # Themes
@@ -412,9 +386,6 @@ in {
       android-studio
       android-tools
       jetbrains.idea
-
-      # Cisco
-      ciscoPacketTracer9
 
       # CSharp
       dotnet-sdk_10
@@ -459,6 +430,17 @@ in {
     "/share/myspell"
     "/share/hyphen"
   ];
+
+  # For dotnet lsps
+  # Because they can't find dotnet without envs
+  environment.sessionVariables = {
+    DOTNET_ROOT = "${pkgs.dotnet-sdk_10}/share/dotnet";
+    DOTNET_ROOT_X64 = "${pkgs.dotnet-sdk_10}/share/dotnet";
+  };
+
+  environment.etc."dotnet/install_location".text = "${pkgs.dotnet-sdk_10}/share/dotnet\n";
+
+  environment.etc."dotnet/install_location_x64".text = "${pkgs.dotnet-sdk_10}/share/dotnet\n";
 
   nix = {
     settings = {

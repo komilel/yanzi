@@ -41,7 +41,7 @@
 
       css.enable = true;
 
-      ts.enable = true;
+      typescript.enable = true;
 
       go.enable = true;
 

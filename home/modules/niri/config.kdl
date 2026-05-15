@@ -75,7 +75,7 @@ overview {
         softness 50
         spread 15
         offset x=10 y=10
-        color "#7180B950"
+        // color "#7180B950"
     }
 }
 
@@ -92,7 +92,7 @@ layout {
   // - "always", the focused column will always be centered.
   // - "on-overflow", focusing a column will center it if it doesn't fit
   //   together with the previously focused column.
-  center-focused-column "on-overflow"
+  center-focused-column "never"
 
   // You can customize the widths that "switch-preset-column-width" (Mod+R) toggles between.
   preset-column-widths {
@@ -290,18 +290,27 @@ window-rule {
 
 window-rule {
   match app-id=r#"telegram"#
-  opacity 0.95
+  opacity 0.9
 }
 
 window-rule {
   match app-id=r#"Thunar|thunar"#
-  opacity 0.95
+  opacity 0.8
 }
 
 window-rule {
-  match app-id=r#"obsidian"#
-  opacity 0.95
+  match title=r#"Obsidian|obsidian"#
+  opacity 0.85
   draw-border-with-background false
+}
+
+// Apply blur to all windows
+window-rule {
+  match title=r#".*"#
+  
+  background-effect {
+    blur true
+  }
 }
 
 // windowrule = [
@@ -375,6 +384,14 @@ window-rule {
 /-window-rule {
   geometry-corner-radius 12
   clip-to-geometry true
+}
+
+blur {
+  // off
+  passes 3
+  offset 4.0
+  noise 0.2
+  saturation 1.5
 }
 
 binds {

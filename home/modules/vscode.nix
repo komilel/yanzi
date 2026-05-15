@@ -37,7 +37,7 @@
           dart-code.flutter
 
           # AI
-          anthropic.claude-code
+          # anthropic.claude-code
         ];
       };
     };

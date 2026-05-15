@@ -179,7 +179,7 @@
               fold_context = true;
               auto_scroll = true;
 
-              intro_message = "Something's cooking...";
+              intro_message = "Cooking...";
               separator = "─"; # The separator between the different messages in the chat buffer
               show_context = true; # Show context (from editor context and slash commands) in the chat buffer?
               show_header_separator = false; # Show header separators in the chat buffer? Set this to false if you're using an external markdown formatting plugin
