@@ -18,6 +18,8 @@ in {
 
     ./modules/cproxy
     ./modules/urix
+
+    ./secrets.nix
   ];
 
   boot = {
@@ -39,17 +41,8 @@ in {
   # Set your time zone.
   time.timeZone = "Asia/Yekaterinburg";
 
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
-  # console = {
-  #   font = "Lat2-Terminus16";
-  #   keyMap = "us";
-  #   useXkbConfig = true; # use xkb.options in tty.
-  # };
 
   fonts.packages = with pkgs; [
     nerd-fonts.droid-sans-mono
@@ -125,9 +118,16 @@ in {
 
   hardware.bluetooth = {
     enable = true;
+    powerOnBoot = true;
     settings = {
       General = {
-        experimental = true;
+        FastConnectable = true;
+        Experimental = false;
+      };
+      Policy = {
+        AutoEnable = true;
+        ReconnectAttempts = 7;
+        ReconnectIntervals = "1,2,4,8,16,32,64";
       };
     };
   };
@@ -170,6 +170,10 @@ in {
     steam = {
       enable = true;
       gamescopeSession.enable = true;
+
+      extraCompatPackages = with pkgs; [
+        proton-ge-bin
+      ];
     };
 
     gamemode.enable = true;
@@ -253,7 +257,6 @@ in {
       zinit
       fzf
       tmux
-      wallust
       mpv-unwrapped
       obsidian
       gcc
@@ -276,7 +279,6 @@ in {
       rofimoji
       lsd
       file-roller
-      unzip
       qbittorrent
       qalculate-gtk
       powertop
@@ -286,9 +288,6 @@ in {
       # Printing, scanning
       hplipWithPlugin
       simple-scan
-
-      # Launcher
-      walker
 
       # Comms
       inetutils
@@ -320,6 +319,8 @@ in {
 
       # Editing
       shotcut
+
+      # Text
       gnome-text-editor
 
       # Utilities
@@ -336,16 +337,20 @@ in {
       ripgrep-all
       ripgrep
       file
+      unzip
 
       # VPN Utilities
       qrencode
       wireguard-tools
       xray
 
+      # Secrets
+      sops
+      age
+
       # Dev
       zed-editor
       devenv
-      gitkraken
       lazygit
 
       # Dev - js
@@ -358,7 +363,6 @@ in {
 
       # AI tools
       codex
-      claude-code
       gemini-cli
 
       # Gaming
@@ -370,6 +374,7 @@ in {
       colloid-icon-theme
       adwaita-icon-theme
 
+      # Browsers
       google-chrome
 
       # Office packages
@@ -378,7 +383,6 @@ in {
       hyphenDicts.ru_RU
       hunspell
       hunspellDicts.ru_RU
-      # onlyoffice-desktopeditors
 
       # === Tmp packages - School ===
 
@@ -399,7 +403,6 @@ in {
       # === Flakes ===
 
       inputs.zen-browser.packages.${system}.default
-      # inputs.nixCats.packages.${system}.nixCats
       sddm-theme
       sddm-theme.test
 
@@ -475,32 +478,6 @@ in {
 
   services.upower.enable = true;
 
-  # BUG: Conflicts with dms?
-  # services.tlp = {
-  #   enable = true;
-  #   settings = {
-  #     CPU_SCALING_GOVERNOR_ON_AC = "performance";
-  #     CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-  #
-  #     CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
-  #     CPU_ENERGY_PERF_POLICY_ON_BAT = "balance_power";
-  #
-  #     CPU_BOOST_ON_AC = 1;
-  #     CPU_BOOST_ON_BAT = 0;
-  #
-  #     CPU_SCALING_MIN_FREQ_ON_AC = 400000;
-  #     CPU_SCALING_MAX_FREQ_ON_AC = 4785000;
-  #     CPU_SCALING_MIN_FREQ_ON_BAT = 400000;
-  #     CPU_SCALING_MAX_FREQ_ON_BAT = 3285000;
-  #
-  #     # Optional helps save long term battery health
-  #     START_CHARGE_THRESH_BAT0 = 40;
-  #     STOP_CHARGE_THRESH_BAT0 = 80;
-  #
-  #     USB_AUTOSUSPEND = 0;
-  #   };
-  # };
-
   services.thermald.enable = true;
 
   services.system76-scheduler.settings.cfsProfiles.enable = true;
@@ -532,14 +509,8 @@ in {
     ];
   };
 
-  # Proxy/vpn
-  services.happd.enable = true;
-  # services.v2raya = {
-  #   enable = true;
-  #   cliPackage = pkgs.xray;
-  # };
-
   powerManagement.enable = true;
+  powerManagement.powertop.enable = false;
 
   networking.firewall = {
     enable = false;

@@ -19,6 +19,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # nixCats.url = "./home/modules/nvim/";
 
     nvf = {
@@ -27,11 +32,6 @@
     };
 
     oglgl.url = "github:wntkys/oglgl";
-
-    happ = {
-      url = "./programs/happ";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = {
@@ -39,6 +39,7 @@
     nixpkgs,
     home-manager,
     nvf,
+    sops-nix,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -49,7 +50,7 @@
       modules = [
         nvf.nixosModules.default
 
-        inputs.happ.nixosModules.default
+        sops-nix.nixosModules.sops
 
         ./configuration.nix
 

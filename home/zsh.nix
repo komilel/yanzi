@@ -12,6 +12,7 @@
     in {
       rbd = "sudo nixos-rebuild switch --flake ${flakeDir}";
       rbdt = "sudo nixos-rebuild test --flake ${flakeDir}";
+      rbdb = "sudo nixos-rebuild boot --flake ${flakeDir}";
 
       c = "clear";
       sn = "shutdown now";

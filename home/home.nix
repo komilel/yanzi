@@ -21,19 +21,6 @@
     size = 24;
   };
 
-  xdg.desktopEntries = {
-    # 2x scaled cisco packet tracer
-    ciscopackettracer2x = {
-      name = "Cisco Packet Tracer 9.0.0 2x";
-      type = "Application";
-      exec = "QT_SCALE_FACTOR=2 packettracer9 %f";
-      icon = "cisco-packet-tracer-9";
-      terminal = false;
-      categories = ["Education"];
-      mimeType = ["application/x-pkt" "application/x-pka" "application/x-pkz" "application/x-pks" "application/x-pksz"];
-    };
-  };
-
   home.packages = [
     (pkgs.symlinkJoin {
       name = "onlyoffice-wayland";
