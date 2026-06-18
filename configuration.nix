@@ -274,9 +274,6 @@ in {
       rocmPackages.rocm-smi
       spotify
       pulseaudio
-      yazi
-      rofi
-      rofimoji
       lsd
       file-roller
       qbittorrent
@@ -291,6 +288,9 @@ in {
 
       # Comms
       inetutils
+
+      # Launcher
+      vicinae
 
       # Secrets
       bitwarden-desktop
@@ -339,6 +339,10 @@ in {
       file
       unzip
 
+      # Utilities - MD -> PDF
+      pandoc
+      texliveSmall
+
       # VPN Utilities
       qrencode
       wireguard-tools
@@ -376,6 +380,7 @@ in {
 
       # Browsers
       google-chrome
+      firefox-bin
 
       # Office packages
       libreoffice-fresh
@@ -389,7 +394,6 @@ in {
       # Android & Java dev
       android-studio
       android-tools
-      jetbrains.idea
 
       # CSharp
       dotnet-sdk_10
@@ -407,8 +411,6 @@ in {
       sddm-theme.test
 
       inputs.oglgl.packages.${system}.default
-
-      inputs.happ.packages.${system}.default
     ]
     ++
     # Import all scripts from a directory and
@@ -490,6 +492,11 @@ in {
         settings = {
           main = {
             capslock = "overload(control, esc)";
+          };
+
+          # For zen tab search tbh
+          "control+alt" = {
+            w = "macro(C-q 80ms S-5 space)";
           };
         };
       };

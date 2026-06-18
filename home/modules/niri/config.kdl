@@ -236,8 +236,7 @@ switch-events {
 // Autolaunch
 spawn-sh-at-startup "gnome-keyring-daemon --start --components=secrets"
 
-// To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
-// spawn-sh-at-startup "qs -c ~/source/qs/MyAwesomeShell"
+spawn-at-startup "vicinae" "server"
 
 hotkey-overlay {
   skip-at-startup
@@ -313,62 +312,6 @@ window-rule {
   }
 }
 
-// windowrule = [
-// "float, initialTitle:Open(.*) "
-// "center, initialTitle:Open(.*)"
-// "opacity 0.9, initialTitle:Open(.*)"
-// "size <80% <80%, initialTitle:Open(.*)"
-//
-// "float, initialTitle:^(((.*)Export(.*))|((.*)Save(.*)))$"
-// "opacity 0.9, initialTitle:^(((.*)Export(.*))|((.*)Save(.*)))$"
-// "center, initialTitle:^(((.*)Export(.*))|((.*)Save(.*)))$"
-// "size <80% <80%, initialTitle:^(((.*)Export(.*))|((.*)Save(.*)))$"
-//
-// "float, initialTitle:^.*File.*$"
-// "opacity 0.9, initialTitle:^.*File.*$"
-// "center, initialTitle:^.*File.*$"
-// "size <80% <80%, initialTitle:^.*File.*$"
-//
-// "float, initialClass:hyprland-share-picker"
-// "opacity 0.8, initialClass:hyprland-share-picker"
-// "center, initialClass:hyprland-share-picker"
-// "size 80% 80%, initialClass:hyprland-share-picker"
-//
-// "size <30% <15%, initialClass:^(.*)(Thunar|thunar)(.*)$, title:.*Rename.*"
-// "float, initialClass:^(.*)(Thunar|thunar)$"
-// "opacity 0.8, initialClass:^(Thunar|thunar)$"
-// "size 85% 85%, initialClass:^(.*)(Thunar|thunar)$"
-// "center, initialClass:^(.*)(Thunar|thunar)$"
-//
-// "float, initialClass:(.*)(telegram)(.*)"
-// "opacity 0.85, initialClass:(.*)(telegram)(.*)"
-// "size 95% 90%, initialClass:(.*)(telegram)(.*)"
-// "center, initialClass:(.*)(telegram)(.*)"
-// "opacity 1, class:org.telegram.desktop, title:Media viewer"
-//
-// # "opacity 0.9, initialClass:(.*)(obsidian)(.*)"
-//
-// "float, initialClass:(.*)(qalculate-gtk)(.*)"
-// "opacity 0.8, initialClass:(.*)(qalculate-gtk)(.*)"
-// "center, initialClass:(.*)(qalculate-gtk)(.*)"
-// "size 70% 70%, initialClass:(.*)(qalculate-gtk)(.*)"
-//
-// "float, initialClass:(.*)(qView)(.*)"
-// "center, initialClass:(.*)(qView)(.*)"
-// "size 80% 80%, initialClass:(.*)(qView)(.*)"
-//
-// "opacity 0.9, initialClass:(.*)(vesktop)(.*)"
-//
-// "opacity 0.9, initialTitle:^(.*)(Spotify)(.*)$"
-// "workspace special:music, initialTitle:^(.*)(Spotify)(.*)$ "
-//
-// # "Smart" gaps
-// "bordersize 0, floating:0, onworkspace:w[tv1]"
-// "rounding 0, floating:0, onworkspace:w[tv1]"
-// "bordersize 0, floating:0, onworkspace:f[1]"
-// "rounding 0, floating:0, onworkspace:f[1]"
-// ];
-
 window-rule {
   match app-id=r#"telegram"#
   match app-id=r#"^org\.gnome\.World\.Secrets$"#
@@ -413,7 +356,7 @@ binds {
 
   // Apps
   Mod+Q hotkey-overlay-title="Open a Terminal: kitty" { spawn "kitty"; }
-  Mod+Alt+R hotkey-overlay-title="Run An Emoji Picker: rofimoji" { spawn-sh "rofimoji -a copy"; }
+  Mod+Alt+R hotkey-overlay-title="Run An Emoji Picker" { spawn-sh "vicinae vicinae://launch/core/search-emojis"; }
   Mod+B hotkey-overlay-title="Browser: zen" { spawn "zen-beta"; }
   Mod+E hotkey-overlay-title="File Manager: thunar" { spawn "thunar"; }
   Mod+T hotkey-overlay-title="Open Telegram" { spawn "Telegram"; }
@@ -422,12 +365,12 @@ binds {
 
   // DMS
   // Application Launchers
-  Mod+R hotkey-overlay-title="Application Launcher" {
-    spawn "dms" "ipc" "call" "spotlight" "toggle";
-  }
-  Mod+Alt+V hotkey-overlay-title="Clipboard Manager" {
-    spawn "dms" "ipc" "call" "clipboard" "toggle";
-  }
+  // Mod+R hotkey-overlay-title="Application Launcher" {
+  //   spawn "dms" "ipc" "call" "spotlight" "toggle";
+  // }
+  // Mod+Alt+V hotkey-overlay-title="Clipboard Manager" {
+  //   spawn "dms" "ipc" "call" "clipboard" "toggle";
+  // }
   Mod+M hotkey-overlay-title="Task Manager" {
     spawn "dms" "ipc" "call" "processlist" "focusOrToggle";
   }
@@ -439,6 +382,14 @@ binds {
   }
   Mod+Y hotkey-overlay-title="Browse Wallpapers" {
     spawn "dms" "ipc" "call" "dankdash" "wallpaper";
+  }
+
+  // Launcher cmds
+  Mod+R hotkey-overlay-title="Application Launcher" repeat=false {
+    spawn "vicinae" "toggle"
+  }
+  Mod+Alt+V hotkey-overlay-title="Clipboard Manager" {
+    spawn "vicinae" "vicinae://launch/clipboard/history"
   }
 
   // Music
