@@ -1,5 +1,4 @@
-{config, ...}:
-let
+{config, ...}: let
   Home = "${config.home.homeDirectory}";
 in {
   programs.wallust = {
@@ -14,11 +13,6 @@ in {
         waybar = {
           template = "waybar.css";
           target = "${Home}/.cache/wallust/waybar.css";
-        };
-
-        hyprland = {
-          src = "colors-hyprland.conf";
-          dst = "${Home}/.cache/wallust/colors-hyprland.conf";
         };
 
         rofi = {

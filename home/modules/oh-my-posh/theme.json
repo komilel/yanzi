@@ -55,7 +55,7 @@
         {
           "style": "plain",
           "foreground": "p:closer",
-          "template": "\uf105",
+          "template": "\n\uf105",
           "type": "text"
         }
       ],

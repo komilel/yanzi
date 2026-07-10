@@ -10,6 +10,20 @@
   sddm-theme = inputs.silentSDDM.packages.${system}.default.override {
     theme = "rei";
   };
+  spotifyWayland = pkgs.symlinkJoin {
+    name = "spotify-wayland-${pkgs.spotify.version}";
+
+    paths = [pkgs.spotify];
+
+    nativeBuildInputs = [pkgs.makeWrapper];
+
+    postBuild = ''
+      rm "$out/bin/spotify"
+
+      makeWrapper ${pkgs.spotify}/bin/spotify "$out/bin/spotify" \
+      --unset DISPLAY
+    '';
+  };
 in {
   imports = [
     ./hardware-configuration.nix
@@ -32,6 +46,18 @@ in {
     };
     supportedFilesystems = ["ntfs"];
     kernel.sysctl."fs.inotify.max_user_watches" = 1048576;
+    # zram swap is nearly free, so bias the kernel toward using it (default 60).
+    kernel.sysctl."vm.swappiness" = 100;
+  };
+
+  # Compressed RAM swap. Takes high priority automatically, so the kernel fills
+  # this before ever touching the NVMe swap partition (which stays as a low-prio
+  # backstop). zstd = good ratio + speed. memoryPercent is a ceiling, not a
+  # reservation: an empty zram device uses ~no RAM.
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";
+    memoryPercent = 50;
   };
 
   networking.hostName = "Niko";
@@ -148,7 +174,7 @@ in {
   users.users.komi = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = ["wheel" "adbusers" "scanner" "lp" "docker"];
+    extraGroups = ["wheel" "adbusers" "scanner" "lp" "docker" "networkmanager"];
   };
 
   programs = {
@@ -272,7 +298,7 @@ in {
       btop
       nvtopPackages.amd
       rocmPackages.rocm-smi
-      spotify
+      spotifyWayland # Need to unset DISPLAY so spotify works under wayland
       pulseaudio
       lsd
       file-roller
@@ -293,7 +319,7 @@ in {
       vicinae
 
       # Secrets
-      bitwarden-desktop
+      # bitwarden-desktop # electron EOL error?
 
       # Wine
       wineWow64Packages.unstableFull
@@ -338,6 +364,7 @@ in {
       ripgrep
       file
       unzip
+      jq
 
       # Utilities - MD -> PDF
       pandoc
@@ -367,7 +394,7 @@ in {
 
       # AI tools
       codex
-      gemini-cli
+      claude-code
 
       # Gaming
       prismlauncher
@@ -409,6 +436,8 @@ in {
       inputs.zen-browser.packages.${system}.default
       sddm-theme
       sddm-theme.test
+
+      inputs.kimi-code.packages.${system}.default
 
       inputs.oglgl.packages.${system}.default
     ]

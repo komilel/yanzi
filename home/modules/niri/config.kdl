@@ -409,8 +409,8 @@ binds {
     spawn "dms" "ipc" "call" "mpris" "playPause"
   }
 
-  // Security
-  Mod+Alt+L hotkey-overlay-title="Lock Screen" {
+  // Lock - Zzz
+  Mod+Shift+Z hotkey-overlay-title="Lock Screen" {
     spawn "dms" "ipc" "call" "lock" "lock";
   }
 
@@ -434,8 +434,6 @@ binds {
   }
 
   // Utilities
-  Mod+Shift+W { spawn-sh "wallpaper select"; }
-  Mod+Alt+W { spawn-sh "wallpaper random"; }
   Mod+Shift+A { spawn-sh "hyprpicker -al"; }
 
   // Example volume keys mappings for PipeWire & WirePlumber.
@@ -509,9 +507,10 @@ binds {
   // Mod+Shift+Ctrl+Left  { move-window-to-monitor-left; }
   // ...
 
-  // And you can also move a whole workspace to another monitor:
-  // Mod+Shift+Ctrl+Left  { move-workspace-to-monitor-left; }
-  // ...
+  Mod+Alt+H     { move-workspace-to-monitor-left; }
+  Mod+Alt+J     { move-workspace-to-monitor-down; }
+  Mod+Alt+K     { move-workspace-to-monitor-up; }
+  Mod+Alt+L     { move-workspace-to-monitor-right; }
 
   Mod+U              { focus-workspace-down; }
   Mod+I              { focus-workspace-up; }

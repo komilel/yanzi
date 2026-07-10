@@ -31,6 +31,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    kimi-code = {
+      url = "github:MoonshotAI/kimi-code";
+    };
+
     oglgl.url = "github:wntkys/oglgl";
   };
 
