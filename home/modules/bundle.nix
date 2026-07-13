@@ -6,6 +6,7 @@
   ...
 }: {
   imports = [
+    ./packages.nix
     ./niri.nix
     ./gtk.nix
     ./zoxide.nix

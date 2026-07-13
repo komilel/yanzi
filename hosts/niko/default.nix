@@ -8,20 +8,6 @@
   sddmTheme = inputs.silentSDDM.packages.${system}.default.override {
     theme = "rei";
   };
-  spotifyWayland = pkgs.symlinkJoin {
-    name = "spotify-wayland-${pkgs.spotify.version}";
-
-    paths = [pkgs.spotify];
-
-    nativeBuildInputs = [pkgs.makeWrapper];
-
-    postBuild = ''
-      rm "$out/bin/spotify"
-
-      makeWrapper ${pkgs.spotify}/bin/spotify "$out/bin/spotify" \
-      --unset DISPLAY
-    '';
-  };
 in {
   _module.args = {inherit sddmTheme;};
 
@@ -30,6 +16,7 @@ in {
     ./secrets.nix
     ../../modules/nixos
     ../../nvim/configuration.nix
+    ../../profiles/school.nix
   ];
 
   networking.hostName = "Niko";
@@ -50,173 +37,36 @@ in {
 
   environment.systemPackages = with pkgs;
     [
+      # Base system and administration
       vim
       wget
-      neovim
-      vscode
-      kitty
-      telegram-desktop
-      vesktop
-      zsh
-      zinit
-      fzf
-      tmux
-      mpv-unwrapped
-      obsidian
-      gcc
       bluez
       bluez-tools
-      wl-clipboard
       busybox
-      git
-      brightnessctl
-      pavucontrol
-      bibata-cursors
-      qview
-      btop
-      nvtopPackages.amd
-      rocmPackages.rocm-smi
-      spotifyWayland # Need to unset DISPLAY so spotify works under wayland
       pulseaudio
-      lsd
-      file-roller
-      qbittorrent
-      qalculate-gtk
       powertop
-      fastfetch
-      thunderbird
-
-      # Printing, scanning
       hplipWithPlugin
-      simple-scan
-
-      # Comms
       inetutils
-
-      # Launcher
-      vicinae
-
-      # Secrets
-      # bitwarden-desktop # electron EOL error?
-
-      # Wine
-      wineWow64Packages.unstableFull
-      wineWow64Packages.wayland
-      winetricks
-
-      # Networking
       samba
       cifs-utils
+      exfatprogs
+      pciutils
+      wireguard-tools
 
-      # Packages for Niri
+      # Session infrastructure
       xwayland-satellite
       labwc
-
-      # Packages that I need from hypr*
-      hyprpicker
-
-      # Drawing
-      inkscape-with-extensions
-      figma-linux
-      gimp
-      drawio
-
-      # Editing
-      shotcut
-
-      # Text
-      gnome-text-editor
-
-      # Utilities
-      wev
-      obs-studio
-      gparted
-      exfatprogs
-      ghostscript
-      sshfs
-      kalker
-      ffmpeg
-      zip
-      libwebp
-      ripgrep-all
-      ripgrep
-      file
-      unzip
-      jq
-      pciutils
-
-      # Utilities - MD -> PDF
-      pandoc
-      texliveSmall
-
-      # VPN Utilities
-      qrencode
-      wireguard-tools
-      xray
-
-      # Secrets
-      sops
-      age
-
-      # Dev
-      zed-editor
-      devenv
-      lazygit
-
-      # Dev - js
-      bun
-      nodejs
-
-      # Dev - protocols
-      mqttui
-      mqttx
-
-      # AI tools
-      codex
-      claude-code
-
-      # Gaming
-      prismlauncher
-      r2modman
-
-      # Themes
-      colloid-gtk-theme
-      colloid-icon-theme
       adwaita-icon-theme
 
-      # Browsers
-      google-chrome
-      firefox-bin
-
-      # Office packages
-      libreoffice-fresh
+      # System-wide dictionaries
       hyphen
       hyphenDicts.ru_RU
       hunspell
       hunspellDicts.ru_RU
 
-      # === Tmp packages - School ===
-
-      # Android & Java dev
-      android-studio
-      android-tools
-
-      # CSharp
-      dotnet-sdk_10
-
-      # Flutter dev
-      libGLU
-
-      # Plantuml
-      plantuml
-
-      # === Flakes ===
-
-      inputs.zen-browser.packages.${system}.default
+      # SDDM theme and its intentionally retained development artifact
       sddmTheme
       sddmTheme.test
-
-      inputs.oglgl.packages.${system}.default
     ]
     ++
     # Import all scripts from a directory and
@@ -241,17 +91,6 @@ in {
     "/share/myspell"
     "/share/hyphen"
   ];
-
-  # For dotnet lsps
-  # Because they can't find dotnet without envs
-  environment.sessionVariables = {
-    DOTNET_ROOT = "${pkgs.dotnet-sdk_10}/share/dotnet";
-    DOTNET_ROOT_X64 = "${pkgs.dotnet-sdk_10}/share/dotnet";
-  };
-
-  environment.etc."dotnet/install_location".text = "${pkgs.dotnet-sdk_10}/share/dotnet\n";
-
-  environment.etc."dotnet/install_location_x64".text = "${pkgs.dotnet-sdk_10}/share/dotnet\n";
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.

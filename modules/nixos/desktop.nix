@@ -12,7 +12,6 @@
     font-awesome
     noto-fonts
     noto-fonts-color-emoji
-    noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-cjk-serif
     comfortaa
@@ -86,7 +85,10 @@
   };
 
   programs = {
-    firefox.enable = true;
+    firefox = {
+      enable = true;
+      package = pkgs.firefox-bin;
+    };
     gamemode.enable = true;
     kdeconnect.enable = true;
     niri.enable = true;
@@ -102,8 +104,6 @@
       enable = true;
       plugins = with pkgs; [thunar-archive-plugin thunar-volman];
     };
-
-    vscode.enable = true;
 
     weylus = {
       enable = true;
