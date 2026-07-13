@@ -31,8 +31,6 @@
 
       bash.enable = true;
 
-      clang.enable = true;
-
       json.enable = true;
 
       sql.enable = true;

@@ -365,6 +365,7 @@ in {
       file
       unzip
       jq
+      pciutils
 
       # Utilities - MD -> PDF
       pandoc
@@ -436,8 +437,6 @@ in {
       inputs.zen-browser.packages.${system}.default
       sddm-theme
       sddm-theme.test
-
-      inputs.kimi-code.packages.${system}.default
 
       inputs.oglgl.packages.${system}.default
     ]

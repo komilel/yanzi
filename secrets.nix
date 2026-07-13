@@ -43,7 +43,7 @@ in {
       User = "komi";
 
       RuntimeDirectory = "zed-ca";
-      RuntimeDirectoryMode = "0700";
+      RuntimeDirectoryMode = "0755";
 
       RemainAfterExit = true;
     };
@@ -58,7 +58,7 @@ in {
         ${customCa} \
         > "$temporary"
 
-      chmod 0400 "$temporary"
+      chmod 0444 "$temporary"
       mv -f "$temporary" ${zedCaBundle}
     '';
   };
