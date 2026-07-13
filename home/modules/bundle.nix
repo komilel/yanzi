@@ -13,7 +13,6 @@
     ./oh-my-posh/oh-my-posh.nix
     ./kitty.nix
     ./wallust/wallust.nix
-    ./rofi.nix
     ./vscode.nix
     ./zed.nix
     ./git.nix

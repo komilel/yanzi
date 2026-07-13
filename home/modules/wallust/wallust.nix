@@ -10,11 +10,6 @@ in {
       check_contrast = true;
 
       templates = {
-        rofi = {
-          src = "colors-rofi.rasi";
-          dst = "${Home}/.cache/wallust/colors-rofi.rasi";
-        };
-
         niri = {
           src = "colors-niri.kdl";
           dst = "${Home}/.cache/wallust/colors-niri.kdl";
