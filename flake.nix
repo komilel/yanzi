@@ -50,7 +50,7 @@
 
         sops-nix.nixosModules.sops
 
-        ./configuration.nix
+        ./hosts/niko
 
         home-manager.nixosModules.home-manager
         {
