@@ -10,11 +10,6 @@ in {
       check_contrast = true;
 
       templates = {
-        waybar = {
-          template = "waybar.css";
-          target = "${Home}/.cache/wallust/waybar.css";
-        };
-
         rofi = {
           src = "colors-rofi.rasi";
           dst = "${Home}/.cache/wallust/colors-rofi.rasi";
