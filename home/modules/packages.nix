@@ -89,6 +89,7 @@ in {
       devenv
       lazygit
       bun
+      pnpm
       nodejs
       mqttui
       mqttx
@@ -97,7 +98,6 @@ in {
 
       # Wine
       wineWow64Packages.unstableFull
-      wineWow64Packages.wayland
       winetricks
 
       # Gaming

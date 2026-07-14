@@ -8,7 +8,7 @@ in pkgs.writeShellApplication {
     tmux
     fzf
     neovim
-    busybox # For pgrep
+    procps # For pgrep
   ];
   
   text = ''

@@ -3,20 +3,30 @@
   sddmTheme,
   ...
 }: {
-  fonts.packages = with pkgs; [
-    nerd-fonts.droid-sans-mono
-    nerd-fonts.jetbrains-mono
-    nerd-fonts.symbols-only
-    corefonts
-    vista-fonts
-    font-awesome
-    noto-fonts
-    noto-fonts-color-emoji
-    noto-fonts-cjk-sans
-    noto-fonts-cjk-serif
-    comfortaa
-    rubik
-  ];
+  fonts = {
+    packages = with pkgs; [
+      nerd-fonts.droid-sans-mono
+      nerd-fonts.jetbrains-mono
+      nerd-fonts.symbols-only
+      corefonts
+      vista-fonts
+      font-awesome
+      inter
+      noto-fonts
+      noto-fonts-color-emoji
+      noto-fonts-cjk-sans
+      noto-fonts-cjk-serif
+      comfortaa
+      rubik
+    ];
+
+    fontconfig.defaultFonts = {
+      sansSerif = ["Inter Variable" "Noto Sans"];
+      serif = ["Noto Serif" "DejaVu Serif"];
+      monospace = ["JetBrainsMono Nerd Font" "Noto Sans Mono" "DejaVu Sans Mono"];
+      emoji = ["Noto Color Emoji"];
+    };
+  };
 
   qt = {
     enable = true;
