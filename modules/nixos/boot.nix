@@ -10,6 +10,9 @@
 
     supportedFilesystems = ["ntfs"];
 
+    binfmt.emulatedSystems = ["armv7l-linux" "aarch64-linux"];
+    binfmt.preferStaticEmulators = true;
+
     kernel.sysctl = {
       "fs.inotify.max_user_watches" = 1048576;
       # Zram swap is nearly free, so bias the kernel toward using it.

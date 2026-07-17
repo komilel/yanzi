@@ -107,5 +107,6 @@ in {
     ++ [
       inputs.zen-browser.packages.${system}.default
       inputs.oglgl.packages.${system}.default
+      inputs.llm-agents.packages.${system}.pi
     ];
 }

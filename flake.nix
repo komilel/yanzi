@@ -29,6 +29,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    llm-agents.url = "github:numtide/llm-agents.nix";
+
     oglgl.url = "github:wntkys/oglgl";
   };
 

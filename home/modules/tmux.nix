@@ -10,6 +10,8 @@
     extraConfig = ''
       set-option -g status-position top
       set -g allow-passthrough on
+      set -g extended-keys
+      set -g extended-keys-format csi-u
       set -s escape-time 0
 
       # Vim-like pane navigation

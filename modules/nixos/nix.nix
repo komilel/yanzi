@@ -14,4 +14,10 @@
       options = "--delete-older-than 14d";
     };
   };
+
+  systemd.services.nix-daemon.environment = {
+    HTTP_PROXY = "http://127.0.0.1:10809";
+    HTTPS_PROXY = "http://127.0.0.1:10809";
+    NO_PROXY = "127.0.0.1,localhost";
+  };
 }

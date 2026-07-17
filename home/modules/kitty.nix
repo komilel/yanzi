@@ -21,5 +21,10 @@
       confirm_os_window_close = 0;
       shell_integration = "no-cursor";
     };
+
+    keybindings = {
+      "alt+u" = "remote_control scroll-window 0.5p-";
+      "alt+d" = "remote_control scroll-window 0.5p";
+    };
   };
 }
