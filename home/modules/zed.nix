@@ -2,6 +2,14 @@
   programs.zed-editor = {
     enable = true;
 
+    extraPackages = with pkgs; [
+      nixd
+      alejandra
+
+      rust-analyzer
+      rustfmt
+    ];
+
     extensions = [
       # General
       "catppuccin-blur"

@@ -370,6 +370,7 @@ binds {
   Mod+T hotkey-overlay-title="Open Telegram" { spawn "Telegram"; }
   Mod+S hotkey-overlay-title="Open Spotify" { spawn "spotify"; }
   Mod+Z hotkey-overlay-title="Open Zed: Code editor" { spawn "zeditor"; }
+  Mod+G hotkey-overlay-title="Open Obsidian" { spawn "obsidian"; }
 
   // DMS
   // Application Launchers
@@ -651,6 +652,9 @@ binds {
   Mod+Shift+S { screenshot; }
   Mod+Shift+X { screenshot-screen; }
   Mod+Shift+C { screenshot-window; }
+
+  // Screen-region OCR translator (Chinese → English).
+  Mod+Shift+T hotkey-overlay-title="Translate screen region (CN->EN)" { spawn "translate-screen"; }
 
   // Applications such as remote-desktop clients and software KVM switches may
   // request that niri stops processing the keyboard shortcuts defined here

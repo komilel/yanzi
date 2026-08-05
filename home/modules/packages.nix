@@ -75,6 +75,7 @@ in {
       libwebp
       ripgrep-all
       ripgrep
+      fd
       file
       unzip
       jq
