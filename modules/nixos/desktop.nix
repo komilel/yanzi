@@ -120,19 +120,5 @@
       users = ["root" "komi"];
       openFirewall = true;
     };
-
-    dms-shell = {
-      enable = true;
-      systemd = {
-        enable = true;
-        restartIfChanged = true;
-      };
-      enableSystemMonitoring = true;
-      enableVPN = true;
-      enableDynamicTheming = true;
-      enableAudioWavelength = true;
-      enableCalendarEvents = false;
-      enableClipboardPaste = true;
-    };
   };
 }

@@ -31,7 +31,7 @@ input {
   }
 
   mouse {
-    // accel-speed 0.2
+    accel-speed 0.4
     scroll-factor 1.0
   }
 
@@ -242,6 +242,8 @@ spawn-sh-at-startup "gnome-keyring-daemon --start --components=secrets"
 
 spawn-at-startup "vicinae" "server"
 
+spawn-at-startup "noctalia"
+
 // Input method daemon (fcitx5). Started here because niri, being a
 // standalone compositor, does not run the XDG autostart entries on its own.
 spawn-at-startup "fcitx5" "-d"
@@ -372,26 +374,22 @@ binds {
   Mod+Z hotkey-overlay-title="Open Zed: Code editor" { spawn "zeditor"; }
   Mod+G hotkey-overlay-title="Open Obsidian" { spawn "obsidian"; }
 
-  // DMS
-  // Application Launchers
-  // Mod+R hotkey-overlay-title="Application Launcher" {
-  //   spawn "dms" "ipc" "call" "spotlight" "toggle";
-  // }
-  // Mod+Alt+V hotkey-overlay-title="Clipboard Manager" {
-  //   spawn "dms" "ipc" "call" "clipboard" "toggle";
-  // }
-  Mod+M hotkey-overlay-title="Task Manager" {
-    spawn "dms" "ipc" "call" "processlist" "focusOrToggle";
-  }
-  Mod+Slash hotkey-overlay-title="Settings" {
-    spawn "dms" "ipc" "call" "settings" "focusOrToggle";
-  }
-  Mod+N hotkey-overlay-title="Notification Center" {
-    spawn "dms" "ipc" "call" "notifications" "toggle";
-  }
-  Mod+Y hotkey-overlay-title="Browse Wallpapers" {
-    spawn "dms" "ipc" "call" "dankdash" "wallpaper";
-  }
+  // Noctalia
+  // Core Noctalia binds
+  Mod+A { spawn-sh "noctalia msg panel-toggle control-center"; }
+  Mod+Slash { spawn-sh "noctalia msg settings-toggle"; }
+  Alt+Tab { spawn-sh "noctalia msg window-switcher"; }
+
+  // Wallpaper keybinds
+  Mod+Alt+W { spawn-sh "noctalia msg wallpaper-random"; }
+  Mod+W { spawn-sh "noctalia msg panel-toggle wallpaper"; }
+
+  // Audio & Brightness
+  XF86AudioRaiseVolume { spawn-sh "noctalia msg volume-up"; }
+  XF86AudioLowerVolume { spawn-sh "noctalia msg volume-down"; }
+  XF86AudioMute { spawn-sh "noctalia msg volume-mute"; }
+  XF86MonBrightnessUp { spawn-sh "noctalia msg brightness-up"; }
+  XF86MonBrightnessDown { spawn-sh "noctalia msg brightness-down"; }
 
   // Launcher cmds
   Mod+R hotkey-overlay-title="Application Launcher" repeat=false {
@@ -402,56 +400,17 @@ binds {
   }
 
   // Music
-  Mod+Alt+N hotkey-overlay-title="Music Player: Next" {
-    spawn "dms" "ipc" "call" "mpris" "next"
-  }
-  XF86AudioNext hotkey-overlay-title="Music Player: Next" {
-    spawn "dms" "ipc" "call" "mpris" "next"
-  }
-  Mod+Alt+M hotkey-overlay-title="Music Player: Previous" {
-    spawn "dms" "ipc" "call" "mpris" "previous"
-  }
-  XF86AudioPrev hotkey-overlay-title="Music Player: Previous" {
-    spawn "dms" "ipc" "call" "mpris" "previous"
-  }
-  XF86AudioPlay hotkey-overlay-title="Music Player: Play/pause" {
-    spawn "dms" "ipc" "call" "mpris" "playPause"
-  }
+  Mod+Alt+N hotkey-overlay-title="Music Player: Next" { spawn-sh "noctalia msg media next"; }
+  XF86AudioNext hotkey-overlay-title="Music Player: Next" { spawn-sh "noctalia msg media next"; }
+  Mod+Alt+M hotkey-overlay-title="Music Player: Previous" { spawn-sh "noctalia msg media previous"; }
+  XF86AudioPrev hotkey-overlay-title="Music Player: Previous" { spawn-sh "noctalia msg media previous"; }
+  XF86AudioPlay hotkey-overlay-title="Music Player: Play/pause" { spawn-sh "noctalia msg media toggle"; }
 
   // Lock - Zzz
-  Mod+Shift+Z hotkey-overlay-title="Lock Screen" {
-    spawn "dms" "ipc" "call" "lock" "lock";
-  }
-
-  // Audio Controls
-  // XF86AudioRaiseVolume allow-when-locked=true {
-  //   spawn "dms" "ipc" "call" "audio" "increment" "3";
-  // }
-  // XF86AudioLowerVolume allow-when-locked=true {
-  //   spawn "dms" "ipc" "call" "audio" "decrement" "3";
-  // }
-  // XF86AudioMute allow-when-locked=true {
-  //   spawn "dms" "ipc" "call" "audio" "mute";
-  // }
-
-  // Brightness Controls
-  XF86MonBrightnessUp allow-when-locked=true {
-    spawn "dms" "ipc" "call" "brightness" "increment" "5" "";
-  }
-  XF86MonBrightnessDown allow-when-locked=true {
-    spawn "dms" "ipc" "call" "brightness" "decrement" "5" "";
-  }
+  Mod+Shift+Z hotkey-overlay-title="Lock Screen" { spawn-sh "noctalia msg session lock"; }
 
   // Utilities
   Mod+Shift+A { spawn-sh "hyprpicker -al"; }
-
-  // Example volume keys mappings for PipeWire & WirePlumber.
-  // The allow-when-locked=true property makes them work even when the session is locked.
-  // Using spawn-sh allows to pass multiple arguments together with the command.
-  XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+"; }
-  XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-"; }
-  XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
-  XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
 
   // Example brightness key mappings for brightnessctl.
   // You can use regular spawn with multiple arguments too (to avoid going through "sh"),
@@ -636,11 +595,6 @@ binds {
   Mod+V       { toggle-window-floating; }
   Mod+Shift+V { switch-focus-between-floating-and-tiling; }
 
-  // Toggle tabbed column display mode.
-  // Windows in this column will appear as vertical tabs,
-  // rather than stacked on top of each other.
-  Mod+W { toggle-column-tabbed-display; }
-
   // Actions to switch layouts.
   // Note: if you uncomment these, make sure you do NOT have
   // a matching layout switch hotkey configured in xkb options above.
@@ -675,7 +629,7 @@ binds {
   Mod+Shift+P { power-off-monitors; }
 
   // Dynamic cast target
-  Mod+A { set-dynamic-cast-window; }
-  Mod+Ctrl+A { clear-dynamic-cast-target; }
+  // Mod+A { set-dynamic-cast-window; }
+  // Mod+Ctrl+A { clear-dynamic-cast-target; }
 }
 

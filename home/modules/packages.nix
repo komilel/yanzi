@@ -51,6 +51,8 @@ in {
       libreoffice-fresh
       onlyofficeWayland
       spotifyWayland
+      remmina
+      moonlight-qt
 
       # Desktop utilities
       wl-clipboard
@@ -109,5 +111,6 @@ in {
       inputs.zen-browser.packages.${system}.default
       inputs.oglgl.packages.${system}.default
       inputs.llm-agents.packages.${system}.pi
+      inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
 }

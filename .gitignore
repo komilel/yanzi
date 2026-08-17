@@ -1,2 +1,5 @@
 **/private*
 **/__pycache__
+
+# Pi artifacts
+.pi*

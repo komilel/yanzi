@@ -18,6 +18,10 @@
       # Zram swap is nearly free, so bias the kernel toward using it.
       "vm.swappiness" = 100;
     };
+
+    extraModprobeConfig = ''
+      options rtw89_core disable_ps_mode=Y
+    '';
   };
 
   # Compressed RAM swap takes priority over the NVMe swap partition.

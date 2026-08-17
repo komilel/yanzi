@@ -21,10 +21,8 @@ in {
 
   networking.hostName = "Niko";
 
-  # Set your time zone.
-  time.timeZone = "Asia/Yekaterinburg";
+  time.timeZone = "Asia/Singapore";
 
-  # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
   users.users.komi = {
@@ -63,6 +61,9 @@ in {
       hyphenDicts.ru_RU
       hunspell
       hunspellDicts.ru_RU
+
+      # Flakes
+      inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
 
       # SDDM theme and its intentionally retained development artifact
       sddmTheme

@@ -16,7 +16,7 @@ in
       grim # Wayland-native screenshot (no portal needed on niri)
       slurp # Wayland-native region picker
       wl-clipboard # wl-copy for the result
-      libnotify # notify-send (best-effort, via dms-shell)
+      libnotify # notify-send (best-effort)
       gnused # text cleanup
       translate-shell # the `trans` CLI (confirmed working)
       tesseract
