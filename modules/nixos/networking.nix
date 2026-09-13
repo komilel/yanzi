@@ -1,7 +1,6 @@
 {
   imports = [
     ../cproxy
-    ../urix
   ];
 
   networking = {
@@ -48,7 +47,7 @@
 
   programs = {
     cproxy.enable = true;
-    urix.enable = true;
+    shluz.enable = true;
   };
 
   security.sudo.extraRules = [

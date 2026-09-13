@@ -14,7 +14,7 @@
 
         format = {
           enable = true;
-          type = ["prettierd"];
+          type = ["prettier"];
         };
 
         extensions = {

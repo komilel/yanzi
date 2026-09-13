@@ -1,53 +1,32 @@
 {pkgs, ...}: let
-  cproxyCmd = "sudo -E /run/current-system/sw/bin/cproxy --port 12345 --mode tproxy --";
+  firefoxDirect = pkgs.writeShellScriptBin "firefox-direct" ''
+    unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+    exec ${pkgs.firefox-bin}/bin/firefox "$@"
+  '';
 
-  mkProxyWrapper = name: bin:
-    pkgs.writeShellScriptBin name ''
-      exec ${cproxyCmd} ${bin} "$@"
-    '';
-
-  proxyApps = {
-    chrome-proxy = "google-chrome-stable --user-data-dir=$HOME/.config/chrome-proxy";
-    vesktop-proxy = "vesktop";
-    telegram-proxy = "Telegram";
-  };
-
-  wrappers = builtins.attrValues (builtins.mapAttrs mkProxyWrapper proxyApps);
+  chromeDirect = pkgs.writeShellScriptBin "chrome-direct" ''
+    unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+    exec ${pkgs.google-chrome}/bin/google-chrome-stable "$@"
+  '';
 in {
-  home.packages = wrappers;
-
-  programs.bash.shellAliases =
-    builtins.mapAttrs (
-      _name: bin: "${cproxyCmd} ${bin}"
-    )
-    proxyApps
-    // {
-      proxy = "${cproxyCmd}";
-    };
+  home.packages = [firefoxDirect chromeDirect];
 
   xdg.desktopEntries = {
-    chrome-proxy = {
-      name = "Google Chrome (Proxy)";
-      exec = "chrome-proxy %U";
-      icon = "google-chrome";
-      comment = "Chrome through proxy";
+    firefox-direct = {
+      name = "Firefox (No Proxy)";
+      exec = "firefox-direct %U";
+      icon = "firefox";
+      comment = "Browse Firefox without HTTP proxy environment variables";
       categories = ["Network" "WebBrowser"];
       terminal = false;
     };
-    vesktop-proxy = {
-      name = "Vesktop (Proxy)";
-      exec = "vesktop-proxy %U";
-      icon = "vesktop";
-      comment = "Vesktop through proxy";
-      categories = ["Network" "InstantMessaging"];
-      terminal = false;
-    };
-    telegram-proxy = {
-      name = "Telegram (Proxy)";
-      exec = "telegram-proxy -- %U";
-      icon = "telegram";
-      comment = "Telegram through proxy";
-      categories = ["Network" "InstantMessaging"];
+
+    chrome-direct = {
+      name = "Google Chrome (No Proxy)";
+      exec = "chrome-direct %U";
+      icon = "google-chrome";
+      comment = "Browse Chrome without HTTP proxy environment variables";
+      categories = ["Network" "WebBrowser"];
       terminal = false;
     };
   };

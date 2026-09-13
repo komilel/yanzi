@@ -28,7 +28,7 @@ in {
   users.users.komi = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = ["wheel" "adbusers" "scanner" "lp" "docker" "networkmanager"];
+    extraGroups = ["wheel" "adbusers" "scanner" "lp" "docker" "networkmanager" "shluz"];
   };
 
   programs.zsh.enable = true;

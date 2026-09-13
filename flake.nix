@@ -36,6 +36,11 @@
     llm-agents.url = "github:numtide/llm-agents.nix";
 
     oglgl.url = "github:wntkys/oglgl";
+
+    shluz = {
+      url = "git+https://fjo.osds.digital/forgejo-admin/shluz-bin.git?ref=main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -53,6 +58,7 @@
       specialArgs = {inherit self inputs system;};
       modules = [
         nvf.nixosModules.default
+        inputs.shluz.nixosModules.default
 
         sops-nix.nixosModules.sops
 

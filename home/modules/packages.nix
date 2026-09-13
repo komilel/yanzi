@@ -53,6 +53,7 @@ in {
       spotifyWayland
       remmina
       moonlight-qt
+      wechat
 
       # Desktop utilities
       wl-clipboard
