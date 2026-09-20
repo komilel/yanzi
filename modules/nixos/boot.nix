@@ -11,7 +11,7 @@
     supportedFilesystems = ["ntfs"];
 
     binfmt.emulatedSystems = ["armv7l-linux" "aarch64-linux"];
-    binfmt.preferStaticEmulators = true;
+    binfmt.preferStaticEmulators = false;
 
     kernel.sysctl = {
       "fs.inotify.max_user_watches" = 1048576;

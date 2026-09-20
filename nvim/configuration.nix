@@ -70,7 +70,7 @@
           enable = true;
           theme = "auto";
 
-          activeSection.b = [
+          setupOpts.sections.lualine_b = map lib.generators.mkLuaInline [
             ''{ "filetype", colored = true, icon_only = true, icon = { align = 'left' } } ''
             ''{ "filename", path = 4, symbols = {modified = ' ', readonly = ' '}, separator = {right = ''} } ''
             ''{ "", draw_empty = true, separator = { left = '', right = '' } } ''

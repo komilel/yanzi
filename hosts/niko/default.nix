@@ -21,6 +21,13 @@ in {
 
   networking.hostName = "Niko";
 
+  # Temporary: linux-firmware 20260910 fails to load DMCUB on this Radeon 680M.
+  nixpkgs.overlays = [
+    (_final: _prev: {
+      linux-firmware = inputs.nixpkgs-firmware.legacyPackages.${system}.linux-firmware;
+    })
+  ];
+
   time.timeZone = "Asia/Singapore";
 
   i18n.defaultLocale = "en_US.UTF-8";

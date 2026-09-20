@@ -4,6 +4,9 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # Generation 529's known-good firmware; keep other packages on current nixpkgs.
+    nixpkgs-firmware.url = "github:nixos/nixpkgs/ec2d622de0773551768cf98f3fc50cbcc003b9c5";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";

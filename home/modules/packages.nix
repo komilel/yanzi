@@ -48,12 +48,13 @@ in {
       obs-studio
       gparted
       google-chrome
-      libreoffice-fresh
+      libreoffice-stable
       onlyofficeWayland
       spotifyWayland
       remmina
       moonlight-qt
       wechat
+      gnome-sound-recorder
 
       # Desktop utilities
       wl-clipboard
