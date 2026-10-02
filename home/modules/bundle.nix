@@ -17,6 +17,7 @@
     ./zed.nix
     ./git.nix
     ./tmux.nix
+    ./zellij.nix
     ./proxy.nix
   ];
 }
