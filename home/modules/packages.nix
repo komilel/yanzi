@@ -55,6 +55,7 @@ in {
       moonlight-qt
       wechat
       gnome-sound-recorder
+      anki-bin
 
       # Desktop utilities
       wl-clipboard

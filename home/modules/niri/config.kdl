@@ -12,7 +12,8 @@ input {
       // For more information, see xkeyboard-config(7).
 
       layout "us,ru"
-      options "grp:toggle"
+
+      options "grp:toggle,compose:rctrl"
     }
 
     track-layout "window"

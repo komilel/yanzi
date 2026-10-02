@@ -8,6 +8,8 @@
         ids = ["*"];
         settings = {
           main.capslock = "overload(control, esc)";
+          # Preserve Right Ctrl for Niri's compose:rctrl instead of keyd's Control layer.
+          main.rightcontrol = "rightcontrol";
 
           # Used for Zen's tab search shortcut.
           "control+alt".w = "macro(C-q 80ms S-5 space)";

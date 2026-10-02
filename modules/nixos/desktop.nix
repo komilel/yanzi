@@ -100,7 +100,31 @@
       package = pkgs.firefox-bin;
     };
     gamemode.enable = true;
-    kdeconnect.enable = true;
+    kdeconnect = {
+      enable = true;
+      package = pkgs.kdePackages.kdeconnect-kde.overrideAttrs (old: {
+        # Qt's GTK file picker needs GTK's schemas even outside a GNOME session.
+        # Keep the session's theme and limit the schema search path to this package.
+        qtWrapperArgs =
+          (old.qtWrapperArgs or [])
+          ++ [
+            "--prefix"
+            "XDG_DATA_DIRS"
+            ":"
+            "${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}"
+          ];
+
+        # Incoming payload sockets can use the session's HTTP proxy even though
+        # the control connection bypasses it. Also covers autostart/D-Bus launches.
+        postFixup =
+          (old.postFixup or "")
+          + ''
+            wrapProgram "$out/bin/kdeconnectd" \
+              --unset HTTP_PROXY --unset HTTPS_PROXY --unset ALL_PROXY \
+              --unset http_proxy --unset https_proxy --unset all_proxy
+          '';
+      });
+    };
     niri.enable = true;
     seahorse.enable = true;
 
