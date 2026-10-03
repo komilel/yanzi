@@ -13,7 +13,6 @@
     startPlugins = with pkgs.vimPlugins; [
       # AI (CodeCompanion)
       codecompanion-spinner-nvim
-      codecompanion-lualine-nvim
     ];
 
     lazy.plugins = with pkgs.vimPlugins; {
@@ -26,6 +25,7 @@
         setupOpts = {
           picker = {
             enabled = true;
+            ui_select = false; # FastAction owns vim.ui.select; Snacks serves AI pickers.
           };
           input = {
             enabled = true;
@@ -39,6 +39,7 @@
       "claudecode.nvim" = {
         enabled = true;
         package = claudecode-nvim;
+        cmd = ["ClaudeCode" "ClaudeCodeSend"];
 
         setupModule = "claudecode";
         setupOpts = {
@@ -88,14 +89,14 @@
       "codecompanion.nvim" = {
         enabled = true;
         package = codecompanion-nvim;
+        cmd = ["CodeCompanion" "CodeCompanionChat" "CodeCompanionActions" "CodeCompanionCLI"];
 
         setupModule = "codecompanion";
         setupOpts = {
-          ignore_warnings = true;
-
           interactions = {
             chat = {
               adapter = "claude_code";
+              opts.completion_provider = "blink";
 
               keymaps = {
                 paste_image = {
@@ -121,7 +122,7 @@
                 };
                 codex = {
                   cmd = "codex";
-                  args = {};
+                  args = [];
                   description = "OpenAI Codex CLI";
                 };
               };
@@ -130,28 +131,26 @@
 
           adapters = {
             acp = {
-              claude_code = lib.generators.mkLuaInline ''                      function ()
-                return require("codecompanion.adapters").extend("claude_code", {
-                  defaults = {
-                    model = "opus"
-                  },
-                  commands = {
-                    default = {
-                      "claude-agent-acp"
+              claude_code = lib.generators.mkLuaInline ''
+                function()
+                  return require("codecompanion.adapters").extend("claude_code", {
+                    defaults = { model = "opus" },
+                    commands = { default = { "claude-agent-acp" } },
+                    env = {
+                      -- Fall back to the CLI's login if no explicit token is supplied.
+                      CLAUDE_CODE_OAUTH_TOKEN = vim.env.CLAUDE_CODE_OAUTH_TOKEN
+                        or require("komi.tokens").get_token("claude", { optional = true }),
                     },
-                  },
-                  env = {
-                    CLAUDE_CODE_OAUTH_TOKEN = require("komi.tokens").get_token("claude")
-                  }
-                })
-                end'';
-              codex = lib.generators.mkLuaInline ''                function()
-                              return require("codecompanion.adapters").extend("codex", {
-                                defaults = {
-                                  auth_method = "chatgpt", -- "openai-api-key"|"codex-api-key"|"chatgpt"
-                                },
-                              })
-                            end'';
+                  })
+                end
+              '';
+              codex = lib.generators.mkLuaInline ''
+                function()
+                  return require("codecompanion.adapters").extend("codex", {
+                    defaults = { auth_method = "chatgpt" },
+                  })
+                end
+              '';
             };
 
             http = {
@@ -159,7 +158,7 @@
                 function()
                   return require("codecompanion.adapters").extend("gemini", {
                     env = {
-                      api_key = require("komi.tokens").get_token("gemini")
+                      api_key = vim.env.GEMINI_API_KEY or require("komi.tokens").get_token("gemini")
                     }
                   })
                 end'';
@@ -172,10 +171,6 @@
                 chat_context = "";
               };
 
-              opts = {
-                completion_provider = "blink";
-              };
-
               fold_context = true;
               auto_scroll = true;
 
@@ -185,7 +180,6 @@
               show_header_separator = false; # Show header separators in the chat buffer? Set this to false if you're using an external markdown formatting plugin
               show_settings = false; # Show LLM settings at the top of the chat buffer?
               show_token_count = true; # Show the token count for each response?
-              show_tools_processing = true; # Show the loading message when tools are being executed?
               start_in_insert_mode = false; # Open the chat buffer in insert mode?
             };
           };

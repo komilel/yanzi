@@ -21,13 +21,15 @@
         listReferences = "gr";
         listWorkspaceFolders = "<leader>lwf";
         listWorkspaceSymbols = "<leader>lws";
-        nextDiagnostic = "]d";
-        previousDiagnostic = "[d";
-        openDiagnosticFloat = "<leader>e";
+        # These are global mappings in opts_and_keys.nix, not LSP-dependent.
+        nextDiagnostic = null;
+        previousDiagnostic = null;
+        openDiagnosticFloat = null;
         removeWorkspaceFolder = "<leader>lwr";
         renameSymbol = "<leader>rn";
         signatureHelp = "<leader>ls";
-        toggleFormatOnSave = "<leader>lf";
+        format = null;
+        toggleFormatOnSave = null;
       };
 
       formatOnSave = true;
@@ -36,7 +38,8 @@
 
       lspsaga.enable = false;
 
-      inlayHints.enable = true;
+      # Initialize once per buffer in autocmds.nix; do not toggle on each LspAttach.
+      inlayHints.enable = false;
 
       trouble = {
         enable = true;
@@ -51,6 +54,22 @@
       otter-nvim.enable = true;
 
       presets.tailwindcss-language-server.enable = true;
+    };
+
+    formatter.conform-nvim = {
+      enable = true;
+      setupOpts = {
+        # One synchronous pass before writing, never another pass after writing.
+        format_after_save = null;
+        format_on_save = lib.generators.mkLuaInline ''
+          function(bufnr)
+            if not vim.g.formatsave or vim.b[bufnr].disableFormatSave then
+              return
+            end
+            return { lsp_format = "fallback", timeout_ms = 1500 }
+          end
+        '';
+      };
     };
 
     lazy.plugins = with pkgs.vimPlugins; {

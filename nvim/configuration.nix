@@ -26,8 +26,15 @@
         underline = true;
         virtual_text = {
           spacing = 2;
-          prefix = "\●";
+          prefix = "●";
         };
+        jump.on_jump = lib.generators.mkLuaInline ''
+          function(diagnostic, bufnr)
+            if diagnostic then
+              vim.diagnostic.open_float({ bufnr = bufnr, scope = "cursor", focus = false })
+            end
+          end
+        '';
         float = {border = "rounded";};
         update_in_insert = false;
         severity_sort = true;
@@ -68,7 +75,7 @@
       statusline = {
         lualine = {
           enable = true;
-          theme = "auto";
+          setupOpts.options.theme = "auto";
 
           setupOpts.sections.lualine_b = map lib.generators.mkLuaInline [
             ''{ "filetype", colored = true, icon_only = true, icon = { align = 'left' } } ''
@@ -109,7 +116,7 @@
       #   nvimBufferline.enable = true;
       # };
 
-      treesitter = with pkgs.vimPlugins; {
+      treesitter = {
         enable = true;
 
         # nvim-treesitter-context
@@ -130,9 +137,10 @@
 
         indent = {
           enable = true;
+          excludes = ["cs"];
         };
 
-        grammars = [nvim-treesitter.withAllGrammars];
+        # Language modules supply their parsers; avoid bundling every grammar.
       };
 
       binds = {
@@ -229,10 +237,6 @@
         colorizer.enable = true;
         modes-nvim.enable = false; # the theme looks terrible with catppuccin
         illuminate.enable = true;
-        breadcrumbs = {
-          enable = false;
-          navbuddy.enable = false;
-        };
         smartcolumn = {
           enable = true;
           setupOpts.custom_colorcolumn = {

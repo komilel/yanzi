@@ -12,7 +12,7 @@
       logFile = "/tmp/nvim.log";
     };
 
-    searchCase = "ignore";
+    searchCase = "smart";
 
     options = {
       autoindent = true;
@@ -99,7 +99,7 @@
       }
 
       {
-        key = "<leader>dv";
+        key = "<leader>ud";
         mode = "n";
         action = ''
           function()
@@ -120,7 +120,9 @@
         mode = "n";
         action = ''
           function()
-            vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())
+            local bufnr = vim.api.nvim_get_current_buf()
+            vim.b[bufnr].komi_inlay_hints_initialized = true
+            vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr }), { bufnr = bufnr })
           end
         '';
         desc = "[L]sp [I]nlay Hints Toggle";
@@ -129,7 +131,7 @@
 
       {
         key = "<leader>y";
-        mode = ["n" "x" "v"];
+        mode = ["n" "x"];
         action = "\"+y";
         desc = "Yank to system clipboard";
         noremap = true;
@@ -138,7 +140,7 @@
 
       {
         key = "<leader>Y";
-        mode = ["n" "x" "v"];
+        mode = "n";
         action = "\"+yy";
         desc = "Yank line to system clipboard";
         noremap = true;
@@ -155,7 +157,7 @@
       {
         key = "]d";
         mode = "n";
-        action = "vim.diagnostic.goto_next";
+        action = "function() vim.diagnostic.jump({ count = vim.v.count1 }) end";
         desc = "Go to next diagnostic message";
         lua = true;
       }
@@ -163,7 +165,7 @@
       {
         key = "[d";
         mode = "n";
-        action = "vim.diagnostic.goto_prev";
+        action = "function() vim.diagnostic.jump({ count = -vim.v.count1 }) end";
         desc = "Go to previous diagnostic message";
         lua = true;
       }
@@ -173,6 +175,31 @@
         mode = "n";
         action = "vim.diagnostic.open_float";
         desc = "Open floating diagnostic message";
+        lua = true;
+      }
+
+      # Use the same formatter for manual formatting and saving, even without an LSP.
+      {
+        key = "<leader>lf";
+        mode = ["n" "x"];
+        action = ''
+          function()
+            require("conform").format({ async = false, timeout_ms = 1500, lsp_format = "fallback" })
+          end
+        '';
+        desc = "Format buffer or selection";
+        lua = true;
+      }
+      {
+        key = "<leader>ltf";
+        mode = "n";
+        action = ''
+          function()
+            vim.b.disableFormatSave = not vim.b.disableFormatSave
+            vim.notify("Format on save: " .. (vim.b.disableFormatSave and "off" or "on"))
+          end
+        '';
+        desc = "Toggle format on save for this buffer";
         lua = true;
       }
 

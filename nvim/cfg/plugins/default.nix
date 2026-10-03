@@ -10,21 +10,25 @@
 
   programs.nvf.settings.vim = {
     extraPackages = with pkgs; [
-      fd # For telescope
+      fd # Telescope file search
+      ripgrep # Telescope content search
     ];
 
     lazy.plugins = with pkgs.vimPlugins; {
-      # TODO: Replace with vim.telescope?
       telescope = {
         enabled = true;
         package = "telescope";
+        cmd = ["Telescope"];
 
         setupModule = "telescope";
         setupOpts = {
           pickers = {
             find_files = {
               hidden = true;
+              find_command = ["fd" "--type" "f" "--hidden" "--exclude" ".git"];
             };
+            live_grep.additional_args = ["--hidden" "--glob" "!.git/**"];
+            grep_string.additional_args = ["--hidden" "--glob" "!.git/**"];
           };
         };
 
@@ -32,7 +36,7 @@
           {
             key = "<leader>sf";
             mode = "n";
-            action = "function() return require('telescope.builtin').find_files({ hidden = true }) end";
+            action = "function() return require('telescope.builtin').find_files() end";
             desc = "Telescope: [S]earch [F]iles";
             lua = true;
           }
@@ -52,19 +56,6 @@
             desc = "Telescope: [S]earch [K]eymaps";
             lua = true;
           }
-
-          # {
-          #   key = "<leader>/";
-          #   mode = "n";
-          #   action = ''
-          #     require('telescope.builtin').current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-          #       winblend = 10,
-          #       previewer = false,
-          #     })
-          #   '';
-          #   desc = "Telescope: Fuzzy search current buffer";
-          #   lua = true;
-          # }
 
           {
             key = "<leader><leader>s";

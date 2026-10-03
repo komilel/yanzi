@@ -1,27 +1,12 @@
-{
-  pkgs,
-  lib,
-  ...
-}: {
+{pkgs, ...}: {
   programs.nvf.settings.vim = {
-    startPlugins = with pkgs.vimPlugins; [
-      lsp-overloads-nvim
-    ];
+    startPlugins = [pkgs.vimPlugins.lsp-overloads-nvim];
 
-    autocmds = [
-      {
-        event = ["LspAttach"];
-        callback = lib.generators.mkLuaInline ''
-          function(args)
-            local client = vim.lsp.get_client_by_id(args.data.client_id)
-            if client and client.server_capabilities.signatureHelpProvider then
-              require("lsp-overloads").setup(client, {
-                display_automatically = true,
-              })
-            end
-          end
-        '';
-      }
-    ];
+    # v2 registers its own LspAttach handler. setup(client, opts) was the v1 API.
+    pluginRC.lsp-overloads = ''
+      require("lsp-overloads").setup({
+        display_automatically = true,
+      })
+    '';
   };
 }

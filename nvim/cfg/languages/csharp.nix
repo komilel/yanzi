@@ -24,9 +24,7 @@
 
         setupModule = "roslyn";
         setupOpts = {
-          opts = {
-            filewatching = "off";
-          };
+          filewatching = "off";
         };
 
         after = ''
@@ -42,13 +40,6 @@
               ["csharp|background_analysis"] = {
                 dotnet_analyzer_diagnostics_scope = "openFiles",
                 dotnet_compiler_diagnostics_scope = "openFiles",
-              },
-            },
-            capabilities = {
-              workspace = {
-                didChangeWatchedFiles = {
-                  dynamicRegistration = true,
-                },
               },
             },
           })

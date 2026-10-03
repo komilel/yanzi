@@ -4,52 +4,35 @@
   ...
 }: {
   programs.nvf.settings.vim = {
-    extraPackages = with pkgs; [
-      curl # for downloading the generated diagrams
-      plantuml # well
+    extraPackages = with pkgs; [plantuml xdg-utils];
+
+    # Local CLI rendering only: no HTTP server, Docker or encoder plugin.
+    pluginRC.komi-plantuml = ''
+      require("komi.plantuml").setup({
+        command = "${lib.getExe pkgs.plantuml}",
+        viewer = "${lib.getExe' pkgs.xdg-utils "xdg-open"}",
+      })
+    '';
+
+    keymaps = [
+      {
+        key = "<leader>up";
+        mode = "n";
+        action = "<cmd>PlantumlPreview ascii<CR>";
+        desc = "PlantUML: local text preview";
+      }
+      {
+        key = "<leader>ug";
+        mode = "n";
+        action = "<cmd>PlantumlPreview png<CR>";
+        desc = "PlantUML: local PNG preview";
+      }
+      {
+        key = "<leader>us";
+        mode = "n";
+        action = "<cmd>PlantumlPreview svg<CR>";
+        desc = "PlantUML: local SVG preview";
+      }
     ];
-
-    startPlugins = with pkgs.vimPlugins; [
-      LibDeflate-nvim
-    ];
-
-    lazy.plugins = with pkgs.vimPlugins; {
-      "plantuml.nvim" = {
-        enabled = true;
-        package = plantuml-nvim;
-
-        setupModule = "plantuml";
-        setupOpts = {
-          # default opts
-          base_url = "https://www.plantuml.com/plantuml";
-          reload_events = [];
-          viewer = "xdg-open";
-          docker_image = "plantuml/plantuml-server:tomcat";
-        };
-
-        keys = [
-          {
-            key = "<leader>up";
-            mode = "n";
-            action = "<cmd>PlantumlPreview ascii<CR>";
-            desc = "Plantuml: preview ascii";
-          }
-
-          {
-            key = "<leader>ug";
-            mode = "n";
-            action = "<cmd>PlantumlPreview png<CR>";
-            desc = "Plantuml: preview png";
-          }
-
-          {
-            key = "<leader>us";
-            mode = "n";
-            action = "<cmd>PlantumlStartDocker<CR>";
-            desc = "Plantuml: start docker";
-          }
-        ];
-      };
-    };
   };
 }
