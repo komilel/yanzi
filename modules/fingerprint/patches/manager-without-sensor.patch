@@ -1,0 +1,14 @@
+diff --git a/src/main.cpp b/src/main.cpp
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -111,6 +111,10 @@ int main(int argc, const char* argv[])
+ 
+     Manager manager{loop, dbus, usb, config};
+ 
++    // Keep discovery and USB hotplug alive even before a sensor is ready.
++    // start() is idempotent; device initialization can still call it later.
++    manager.start();
++
+     loop.run();
+     return 0;
+ }

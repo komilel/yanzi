@@ -1,0 +1,136 @@
+--- a/src/drv_fpc/fpc9201.cpp
++++ b/src/drv_fpc/fpc9201.cpp
+@@ -387,6 +387,7 @@
+     QueueType* _message_queue{};
+ 
+     std::string _rule{};
++    std::string _owner{};
+ 
+     AsyncDBusMessage _pending_message{};
+ 
+@@ -396,11 +397,13 @@
+     WorkerListen& operator ()(
+         AsyncDBusConnection& conn,
+         QueueType* queue,
+-        const std::string& rule
++        const std::string& rule,
++        const std::string& owner
+     ) {
+         _connection = conn;
+         _message_queue = queue;
+         _rule = rule;
++        _owner = owner;
+ 
+         async_start(&WorkerListen::add_match);
+         return *this;
+@@ -457,11 +460,20 @@
+     }
+ 
+     static DBusHandlerResult filter_signal(DBusConnection* conn, DBusMessage* msg, void* data) {
+-        if (dbus_message_get_type(msg) != DBUS_MESSAGE_TYPE_SIGNAL) {
++        if (not dbus_message_is_signal(msg, "org.freedesktop.DBus", "NameOwnerChanged")) {
+             return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+         }
+-        // TODO match rule
+         auto* self = reinterpret_cast<WorkerListen*>(data);
++        DBusMessageIter args{};
++        const char* name = nullptr;
++        if (not dbus_message_iter_init(msg, &args)
++            or dbus_message_iter_get_arg_type(&args) != DBUS_TYPE_STRING) {
++            return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
++        }
++        dbus_message_iter_get_basic(&args, &name);
++        if (self->_owner != name) {
++            return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
++        }
+         self->async_resume() >> JINX_IGNORE_RESULT;
+         
+         self->_pending_message.reset(msg);
+@@ -678,7 +690,6 @@
+ 
+     AsyncDBusSend _send_message{};
+     AsyncDBusSendWithReply _send_with_reply{};
+-    Queue<std::queue<FPCEvent>>::Put _put_image{};
+     Queue<std::queue<FPCEvent>>::Put _put_event{};
+ 
+     // Polkit authorization gate state, keyed by "<sender>:<serial>" of the
+@@ -1113,16 +1124,10 @@
+ 
+         dbus_message_iter_get_basic(&args, &new_owner);
+ 
+-        if (new_owner[0] == 0) {
++        // A delayed signal from a previous owner must not release a new claim.
++        if (new_owner[0] == 0 and _claimed and _claimed_sender == old_owner) {
+             syslog(LOG_AUTH | LOG_INFO, "disconnected");
+-            if (_enroll_verify_task != nullptr) {
+-                async_cancel(_enroll_verify_task) >> JINX_IGNORE_RESULT;
+-                _enroll_verify_task.reset();
+-                // A cancelled task can leave a pending Get on _image_queue;
+-                // clear it so a later Put cannot wake a dead awaitable
+-                // (PendingGetError).
+-                _image_queue->reset();
+-            }
++            cancel_enroll_verify();
+             drop_auth_gates(old_owner);
+             _claimed = false;
+             _claimed_sender.clear();
+@@ -1156,7 +1161,7 @@
+         rule.append(sender);
+         rule.append("'");
+ 
+-        _name_owner_chaged_task = task_new<WorkerListen>(_connection, get_message_queue(), rule);
++        _name_owner_chaged_task = task_new<WorkerListen>(_connection, get_message_queue(), rule, sender);
+ 
+         _claimed = true;
+         _claimed_sender = sender;
+@@ -1177,10 +1182,7 @@
+             _name_owner_chaged_task.reset();
+         }
+ 
+-        if (_enroll_verify_task != nullptr) {
+-            _enroll_verify_task->resume({}) >> JINX_IGNORE_RESULT;
+-            _enroll_verify_task.reset();
+-        }
++        cancel_enroll_verify();
+ 
+         // A release during a pending check must not leave an orphaned agent
+         // prompt or let a late authorization re-queue the gated call.
+@@ -1193,7 +1195,24 @@
+         AsyncDBusMessage reply{
+             dbus_message_new_method_return(msg)
+         };
+-        return *this / _send_message(_connection, reply) / &WorkerDevice::run;
++        return *this / _send_message(_connection, reply) / &WorkerDevice::stop_sensor;
++    }
++
++    void cancel_enroll_verify() {
++        if (_enroll_verify_task != nullptr) {
++            // resume({}) re-polls a suspended Queue::Get without removing its
++            // pending-list node. The second insertion throws PendingGetError.
++            // Cancellation unwinds the awaitable and removes that node first.
++            async_cancel(_enroll_verify_task) >> JINX_IGNORE_RESULT;
++            _enroll_verify_task.reset();
++        }
++        _image_queue->reset();
++        _device_state._finger_needed = false;
++        _device_state._finger_present = false;
++    }
++
++    Async stop_sensor() {
++        return *this / _put_event(_event_queue, FPCEvent{FPCEvent::FPP_StopSensor, {}, {}}) / &WorkerDevice::run;
+     }
+ 
+     Async enroll_verify_start() {
+@@ -1318,8 +1337,10 @@
+     }
+ 
+     Async send_enroll_stop() {
+-        _enroll_verify_task.reset();
+-        return *this / _put_image(_image_queue, FPCEvent{FPCEvent::FPP_EnrollVerifyStop, {}, {}}) / &WorkerDevice::run;
++        // Do not drop the handle while the worker is still consuming images:
++        // a new VerifyStart could otherwise race the queued stop event.
++        cancel_enroll_verify();
++        return stop_sensor();
+     }
+ 
+     // TODO signal PropertiesChanged

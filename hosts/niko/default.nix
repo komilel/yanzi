@@ -15,11 +15,19 @@ in {
     ./hardware.nix
     ./secrets.nix
     ../../modules/nixos
+    ../../modules/fingerprint
     ../../nvim/configuration.nix
     ../../profiles/school.nix
   ];
 
   networking.hostName = "Niko";
+
+  services.fingerprint-ocv = {
+    enable = true;
+    # Noctalia handles lockscreen fingerprints directly over D-Bus. Keep its
+    # "login" password stack untouched; opt in only these local PAM consumers.
+    pamServices = ["sudo" "sddm" "polkit-1"];
+  };
 
   # Temporary: linux-firmware 20260910 fails to load DMCUB on this Radeon 680M.
   nixpkgs.overlays = [

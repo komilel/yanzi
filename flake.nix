@@ -56,6 +56,12 @@
   } @ inputs: let
     system = "x86_64-linux";
   in {
+    packages.${system}.fingerprint-ocv = nixpkgs.legacyPackages.${system}.callPackage ./modules/fingerprint/package.nix {};
+
+    checks.${system}.fingerprint-pam = nixpkgs.legacyPackages.${system}.callPackage ./modules/fingerprint/tests/pam-order.nix {
+      inherit (self.nixosConfigurations.Niko.config.security.pam) services;
+    };
+
     nixosConfigurations.Niko = nixpkgs.lib.nixosSystem {
       inherit system;
       specialArgs = {inherit self inputs system;};
