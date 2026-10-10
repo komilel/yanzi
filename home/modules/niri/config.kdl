@@ -374,6 +374,7 @@ binds {
   Mod+S hotkey-overlay-title="Open Spotify" { spawn "spotify"; }
   Mod+Z hotkey-overlay-title="Open Zed: Code editor" { spawn "zeditor"; }
   Mod+G hotkey-overlay-title="Open Obsidian" { spawn "obsidian"; }
+  Mod+X hotkey-overlay-title="Open Wechat (AUR: Arch Distrobox)" { spawn "wechat-arch"; }
 
   // Noctalia
   // Core Noctalia binds

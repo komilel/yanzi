@@ -92,6 +92,7 @@ in {
 
       # Development
       gcc
+      gnumake
       devenv
       lazygit
       bun

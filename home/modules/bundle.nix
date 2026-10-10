@@ -19,5 +19,6 @@
     ./tmux.nix
     ./zellij.nix
     ./proxy.nix
+    ./wechat.nix
   ];
 }
