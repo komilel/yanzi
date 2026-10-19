@@ -68,6 +68,7 @@ in {
       nvtopPackages.amd
       rocmPackages.rocm-smi
       fastfetch
+      mpvpaper
 
       # Shell utilities
       zinit

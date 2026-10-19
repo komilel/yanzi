@@ -56,10 +56,25 @@
   } @ inputs: let
     system = "x86_64-linux";
   in {
-    packages.${system}.fingerprint-ocv = nixpkgs.legacyPackages.${system}.callPackage ./modules/fingerprint/package.nix {};
+    packages.${system} = {
+      fingerprint-ocv = nixpkgs.legacyPackages.${system}.callPackage ./modules/fingerprint/package.nix {};
+      weylus-pipewire = nixpkgs.legacyPackages.${system}.callPackage ./modules/weylus {};
+    };
 
-    checks.${system}.fingerprint-pam = nixpkgs.legacyPackages.${system}.callPackage ./modules/fingerprint/tests/pam-order.nix {
-      inherit (self.nixosConfigurations.Niko.config.security.pam) services;
+    checks.${system} = {
+      weylus-pipewire =
+        nixpkgs.legacyPackages.${system}.runCommand "weylus-pipewire-regressions" {
+          nativeBuildInputs = with nixpkgs.legacyPackages.${system}; [nodejs bash coreutils];
+        } ''
+          export CLIENT_JS=${self.packages.${system}.weylus-pipewire.patchedWeylus}/share/weylus/lib.js
+          node ${./modules/weylus/tests/client.cjs}
+          node ${./modules/weylus/tests/launcher.cjs} ${./modules/weylus/launch.sh}
+          touch "$out"
+        '';
+
+      fingerprint-pam = nixpkgs.legacyPackages.${system}.callPackage ./modules/fingerprint/tests/pam-order.nix {
+        inherit (self.nixosConfigurations.Niko.config.security.pam) services;
+      };
     };
 
     nixosConfigurations.Niko = nixpkgs.lib.nixosSystem {

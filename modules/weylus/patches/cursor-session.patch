@@ -1,0 +1,183 @@
+--- a/src/protocol.rs
++++ b/src/protocol.rs
+@@ -18,6 +18,7 @@
+     WheelEvent(WheelEvent),
+     KeyboardEvent(KeyboardEvent),
+     GetCapturableList,
++    GetCapturableListWithCursor(bool),
+     Config(ClientConfiguration),
+     PauseVideo,
+     ResumeVideo,
+@@ -197,3 +198,26 @@
+ pub trait WeylusReceiver: Iterator<Item = Result<MessageInbound, Self::Error>> {
+     type Error: std::error::Error;
+ }
++
++#[cfg(test)]
++mod cursor_request_tests {
++    use super::*;
++
++    #[test]
++    fn cursor_preference_is_part_of_the_initial_source_request() {
++        for capture_cursor in [false, true] {
++            let json = serde_json::to_string(
++                &MessageInbound::GetCapturableListWithCursor(capture_cursor),
++            ).unwrap();
++            let decoded: MessageInbound = serde_json::from_str(&json).unwrap();
++            assert!(matches!(decoded, MessageInbound::GetCapturableListWithCursor(value)
++                if value == capture_cursor));
++        }
++    }
++
++    #[test]
++    fn legacy_source_requests_remain_supported() {
++        let decoded: MessageInbound = serde_json::from_str("\"GetCapturableList\"").unwrap();
++        assert!(matches!(decoded, MessageInbound::GetCapturableList));
++    }
++}
+--- a/src/websocket.rs
++++ b/src/websocket.rs
+@@ -5,7 +5,7 @@
+ use std::thread::{spawn, JoinHandle};
+ use std::time::{Duration, Instant};
+ use tokio::sync::mpsc::channel;
+-use tracing::{error, trace, warn};
++use tracing::{debug, error, trace, warn};
+ 
+ use crate::capturable::{get_capturables, Capturable, Recorder};
+ use crate::input::device::{InputDevice, InputDeviceType};
+@@ -114,6 +114,12 @@
+                         MessageInbound::WheelEvent(event) => self.process_wheel_event(&event),
+                         MessageInbound::KeyboardEvent(event) => self.process_keyboard_event(&event),
+                         MessageInbound::GetCapturableList => self.send_capturable_list(),
++                        MessageInbound::GetCapturableListWithCursor(capture_cursor) => {
++                            #[cfg(target_os = "linux")]
++                            { self.capture_cursor = capture_cursor; }
++                            debug!("Enumerating capture sources: capture_cursor={capture_cursor}");
++                            self.send_capturable_list();
++                        }
+                         MessageInbound::Config(config) => self.update_config(config),
+                         MessageInbound::PauseVideo => {
+                             self.video_sender.send(VideoCommands::Pause).unwrap()
+--- a/src/capturable/pipewire.rs
++++ b/src/capturable/pipewire.rs
+@@ -987,6 +987,7 @@
+     // 2: Embedded: The cursor is embedded as part of the stream buffers.
+     // 4: Metadata: The cursor is not part of the screen cast stream, but sent as PipeWire stream metadata.
+     let cursor_mode = if capture_cursor { 2u32 } else { 1u32 };
++    debug!("Requesting portal cursor mode: capture_cursor={capture_cursor}, cursor_mode={cursor_mode}");
+ 
+     let is_plasma = std::env::var("DESKTOP_SESSION").map_or(false, |s| s.contains("plasma"));
+     if is_plasma && capture_cursor {
+--- a/ts/lib.ts
++++ b/ts/lib.ts
+@@ -107,6 +107,24 @@
+     pen: Rect;
+ }
+ 
++// PipeWire node IDs change when the portal creates a new sharing session.
++// Match an exact name first; only fall back by kind when there is one candidate.
++function find_capturable_index(current: string | undefined, names: string[]): number {
++    if (!current)
++        return names.length ? 0 : -1;
++    const exact = names.indexOf(current);
++    if (exact >= 0)
++        return exact;
++    if (current.startsWith("Pipewire ") && current.includes(", path: ")) {
++        const kind = current.split(", path: ")[0];
++        const matches = names.map((name, index) => ({ name, index }))
++            .filter(item => item.name.split(", path: ")[0] === kind);
++        if (matches.length === 1)
++            return matches[0].index;
++    }
++    return -1;
++}
++
+ class Settings {
+     webSocket: WebSocket;
+     checks: Map<string, HTMLInputElement>;
+@@ -226,18 +244,29 @@
+         // server
+         let upd_server_config = () => { this.save_settings(); this.send_server_config() };
+         this.checks.get("uinput_support").onchange = upd_server_config;
+-        this.checks.get("capture_cursor").onchange = upd_server_config;
++        this.checks.get("capture_cursor").onchange = () => {
++            this.save_settings();
++            // Cursor mode belongs to the portal session, not the current recorder.
++            this.refresh_capturables();
++        };
+         this.scale_video_input.onchange = upd_server_config;
+         this.client_name_input.onchange = upd_server_config;
+         this.frame_rate_input.onchange = upd_server_config;
+ 
+-        document.getElementById("refresh").onclick = () => this.webSocket.send('"GetCapturableList"');
++        document.getElementById("refresh").onclick = () => this.refresh_capturables();
+         document.getElementById("custom_input_areas").onclick = () => {
+             this.webSocket.send('"ChooseCustomInputAreas"');
+         };
+         this.capturable_select.onchange = () => this.send_server_config();
+     }
+ 
++    refresh_capturables() {
++        if (this.webSocket.readyState === WebSocket.OPEN)
++            this.webSocket.send(JSON.stringify({
++                GetCapturableListWithCursor: this.checks.get("capture_cursor").checked
++            }));
++    }
++
+     send_server_config() {
+         let config = new Object(null);
+         config["capturable_id"] = Number(this.capturable_select.value);
+@@ -359,21 +388,18 @@
+         let current_selection = undefined;
+         if (this.capturable_select.selectedOptions[0])
+             current_selection = this.capturable_select.selectedOptions[0].textContent;
+-        let new_index: number;
++        const new_index = find_capturable_index(current_selection, window_names);
+         this.capturable_select.innerText = "";
+         window_names.forEach((name, i) => {
+             let option = document.createElement("option");
+             option.value = String(i);
+             option.innerText = name;
+             this.capturable_select.appendChild(option);
+-            if (name === current_selection)
+-                new_index = i;
+         });
+-        if (new_index !== undefined)
+-            this.capturable_select.value = String(new_index);
+-        else if (current_selection)
+-            // Can't find the window, so don't select anything
+-            this.capturable_select.value = "";
++        this.capturable_select.value = new_index >= 0 ? String(new_index) : "";
++        // Refresh must start the new stream, not keep recording the old node.
++        if (new_index >= 0)
++            this.send_server_config();
+     }
+ 
+     toggle_energysaving(energysaving: boolean) {
+@@ -1162,11 +1188,12 @@
+     );
+     window.onunload = () => { webSocket.close(); }
+     webSocket.onopen = function(event) {
+-        webSocket.send('"GetCapturableList"');
++        // Supply the saved cursor preference before the portal session is created.
++        settings.refresh_capturables();
+         if (!settings.video_enabled())
+             webSocket.send('"PauseVideo"');
+ 
+-        settings.send_server_config();
++        // onCapturableList sends Config after the new source selection is available.
+ 
+         document.onvisibilitychange = () => {
+             if (document.hidden) {
+--- a/www/templates/index.html
++++ b/www/templates/index.html
+@@ -8,7 +8,7 @@
+     <meta name="mobile-web-app-capable" content="yes">
+     <title>Weylus</title>
+     <link rel="stylesheet" href="style.css">
+-    <script src="lib.js?fix=seek-v2"></script>
++    <script src="lib.js?fix=cursor-v1"></script>
+     <script>
+         run("{{log_level}}");
+     </script>

@@ -1,0 +1,466 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -28,7 +28,7 @@
+ serde = { version = "^1.0", features = ["derive"] }
+ serde_json = "^1.0"
+ signal-hook = "0.3.17"
+-tokio = { version = "^1", features = ["fs", "macros", "rt-multi-thread", "sync", "net"] }
++tokio = { version = "^1", features = ["fs", "macros", "rt-multi-thread", "sync", "net", "time", "io-util"] }
+ toml = "^0.9"
+ tracing = "^0.1"
+ tracing-subscriber = { version = "^0.3", features = ["ansi", "json"], default-features = false }
+--- a/src/video.rs
++++ b/src/video.rs
+@@ -1,4 +1,4 @@
+-use std::os::raw::{c_int, c_uchar, c_void};
++use std::os::raw::{c_double, c_int, c_uchar, c_void};
+ use std::time::Instant;
+ 
+ use tracing::warn;
+@@ -12,6 +12,7 @@
+         height_in: c_int,
+         width_out: c_int,
+         height_out: c_int,
++        frame_rate: c_double,
+         try_vaapi: c_int,
+         try_nvenc: c_int,
+         try_videotoolbox: c_int,
+@@ -20,7 +21,7 @@
+     ) -> *mut c_void;
+     fn open_video(handle: *mut c_void, err: *mut CError);
+     fn destroy_video_encoder(handle: *mut c_void);
+-    fn encode_video_frame(handle: *mut c_void, micros: c_int, err: *mut CError);
++    fn encode_video_frame(handle: *mut c_void, micros: i64, err: *mut CError);
+ 
+     fn fill_rgb(ctx: *mut c_void, data: *const u8, err: *mut CError);
+     fn fill_rgb0(ctx: *mut c_void, data: *const u8, err: *mut CError);
+@@ -115,9 +116,26 @@
+         height_in: usize,
+         width_out: usize,
+         height_out: usize,
++        write_data: impl FnMut(&[u8]) + 'static,
++        options: EncoderOptions,
++    ) -> Result<Box<Self>, CError> {
++        Self::with_frame_rate(width_in, height_in, width_out, height_out, 30.0, write_data, options)
++    }
++
++    pub fn with_frame_rate(
++        width_in: usize,
++        height_in: usize,
++        width_out: usize,
++        height_out: usize,
++        frame_rate: f64,
+         mut write_data: impl FnMut(&[u8]) + 'static,
+         options: EncoderOptions,
+     ) -> Result<Box<Self>, CError> {
++        let frame_rate = if frame_rate.is_finite() && frame_rate > 0.0 {
++            frame_rate.min(120.0)
++        } else {
++            30.0
++        };
+         let mut video_encoder = Box::new(Self {
+             handle: std::ptr::null_mut(),
+             width_in,
+@@ -134,6 +152,7 @@
+                 height_in as c_int,
+                 width_out as c_int,
+                 height_out as c_int,
++                frame_rate,
+                 options.try_vaapi.into(),
+                 options.try_nvenc.into(),
+                 options.try_videotoolbox.into(),
+@@ -184,7 +203,7 @@
+         unsafe {
+             encode_video_frame(
+                 self.handle,
+-                (Instant::now() - self.start_time).as_millis() as c_int,
++                (Instant::now() - self.start_time).as_micros() as i64,
+                 &mut err,
+             );
+         }
+@@ -215,3 +234,81 @@
+         }
+     }
+ }
++
++#[cfg(test)]
++mod timing_tests {
++    use super::*;
++    use std::sync::{Arc, Mutex};
++
++    #[test]
++    fn mp4_timing_is_monotonic_and_advertises_the_requested_rate() {
++        for fps in [60, 120] {
++            let bytes = Arc::new(Mutex::new(Vec::new()));
++            let sink = bytes.clone();
++            let options = EncoderOptions {
++                try_vaapi: false,
++                try_nvenc: false,
++                try_videotoolbox: false,
++                try_mediafoundation: false,
++                input_is_dmabuf: false,
++            };
++            let encoder = VideoEncoder::with_frame_rate(
++                320, 200, 320, 200, fps as f64,
++                move |data| sink.lock().unwrap().extend_from_slice(data),
++                options,
++            ).unwrap();
++            let pixels = vec![64u8; 320 * 200 * 4];
++            for index in 0..30 {
++                // Deliberately repeat a clock reading, as can happen during a burst.
++                let micros = if index == 12 { 11 * 1_000_000 / fps } else { index * 1_000_000 / fps };
++                let mut err = CError::new();
++                unsafe {
++                    fill_bgr0(encoder.handle, pixels.as_ptr(), 320 * 4, &mut err);
++                }
++                assert!(!err.is_err(), "{err}");
++                unsafe { encode_video_frame(encoder.handle, micros, &mut err); }
++                assert!(!err.is_err(), "{err}");
++            }
++            drop(encoder);
++            let path = std::env::temp_dir().join(format!("weylus-timing-{}-{fps}.mp4", std::process::id()));
++            std::fs::write(&path, &*bytes.lock().unwrap()).unwrap();
++            let probe = std::process::Command::new("ffprobe").args([
++                "-v", "error", "-select_streams", "v:0", "-show_packets", "-show_streams",
++                "-show_entries", "stream=r_frame_rate,avg_frame_rate:packet=dts_time,pts_time,duration_time",
++                "-of", "json",
++            ]).arg(&path).output().unwrap();
++            assert!(probe.status.success(), "{}", String::from_utf8_lossy(&probe.stderr));
++            let probe: serde_json::Value = serde_json::from_slice(&probe.stdout).unwrap();
++            let rate = format!("{fps}/1");
++            assert_eq!(probe["streams"][0]["r_frame_rate"], rate);
++            assert_eq!(probe["streams"][0]["avg_frame_rate"], rate);
++            let packets = probe["packets"].as_array().unwrap();
++            assert_eq!(packets.len(), 30);
++            for packet in packets {
++                assert_eq!(packet["pts_time"], packet["dts_time"]);
++                let duration: f64 = packet["duration_time"].as_str().unwrap().parse().unwrap();
++                assert!((duration - 1.0 / fps as f64).abs() < 0.000002, "{packet}");
++            }
++            let timestamps: Vec<f64> = packets.iter()
++                .map(|packet| packet["dts_time"].as_str().unwrap().parse().unwrap()).collect();
++            assert!(timestamps.windows(2).all(|pair| pair[0] < pair[1]), "{timestamps:?}");
++
++            // Inspect H.264 VUI directly: container FPS guesses can hide bad SPS timing.
++            let headers = std::process::Command::new("ffmpeg").args([
++                "-hide_banner", "-loglevel", "trace", "-i",
++            ]).arg(&path).args([
++                "-map", "0:v:0", "-c:v", "copy", "-bsf:v", "trace_headers",
++                "-frames:v", "1", "-f", "null", "-",
++            ]).output().unwrap();
++            assert!(headers.status.success(), "{}", String::from_utf8_lossy(&headers.stderr));
++            let trace = String::from_utf8_lossy(&headers.stderr);
++            let value = |name: &str| -> f64 {
++                trace.lines().find(|line| line.contains(name))
++                    .unwrap_or_else(|| panic!("Missing {name}: {trace}"))
++                    .rsplit('=').next().unwrap().trim().parse().unwrap()
++            };
++            assert_eq!(value("time_scale") / (2.0 * value("num_units_in_tick")), fps as f64);
++            std::fs::remove_file(path).unwrap();
++        }
++    }
++}
+--- a/src/websocket.rs
++++ b/src/websocket.rs
+@@ -1,6 +1,4 @@
+ use fastwebsockets::{FragmentCollectorRead, Frame, OpCode, WebSocket, WebSocketError};
+-use hyper::upgrade::Upgraded;
+-use hyper_util::rt::TokioIo;
+ use std::convert::Infallible;
+ use std::sync::mpsc::RecvTimeoutError;
+ use std::sync::{mpsc, Arc};
+@@ -325,6 +323,7 @@
+ 
+     let mut max_width = 1920;
+     let mut max_height = 1080;
++    let mut frame_rate = 30.0;
+     let mut frame_duration = EFFECTIVE_INIFINITY;
+     let mut last_frame = Instant::now();
+     let mut paused = false;
+@@ -367,6 +366,7 @@
+                         video_encoder = None;
+                         max_width = config.max_width;
+                         max_height = config.max_height;
++                        frame_rate = config.frame_rate;
+                         send_message(&mut sender, MessageOutbound::ConfigOk);
+                     }
+                     Err(err) => {
+@@ -433,11 +433,12 @@
+                     let mut sender = sender.clone();
+                     let mut encoder_options = encoder_options;
+                     encoder_options.input_is_dmabuf = input_is_dmabuf;
+-                    let res = VideoEncoder::new(
++                    let res = VideoEncoder::with_frame_rate(
+                         width_in,
+                         height_in,
+                         width_out,
+                         height_out,
++                        frame_rate,
+                         move |data| {
+                             if let Err(err) = sender.send_video(data) {
+                                 warn!("Failed to send video frame: {err}!");
+@@ -504,10 +505,13 @@
+     }
+ }
+ 
+-pub fn weylus_websocket_channel(
+-    websocket: WebSocket<TokioIo<Upgraded>>,
++pub fn weylus_websocket_channel<S>(
++    websocket: WebSocket<S>,
+     semaphore_shutdown: Arc<tokio::sync::Semaphore>,
+-) -> (WsWeylusSender, WsWeylusReceiver) {
++) -> (WsWeylusSender, WsWeylusReceiver)
++where
++    S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + 'static,
++{
+     let (rx, mut tx) = websocket.split(|ws| tokio::io::split(ws));
+ 
+     let mut rx = FragmentCollectorRead::new(rx);
+@@ -515,7 +519,7 @@
+     let (sender_inbound, receiver_inbound) = channel::<MessageInbound>(32);
+     let (sender_outbound, mut receiver_outbound) = channel::<WsMessage>(32);
+ 
+-    {
++    let read_task = {
+         let sender_outbound = sender_outbound.clone();
+         tokio::spawn(async move {
+             let mut send_fn = |frame| async {
+@@ -551,8 +555,8 @@
+                     _ => {}
+                 }
+             }
+-        });
+-    }
++        })
++    };
+ 
+     tokio::spawn(async move {
+         loop {
+@@ -562,35 +566,30 @@
+                 break;
+             };
+ 
+-            match msg {
+-                WsMessage::Frame(frame) => {
+-                    if let Err(err) = tx.write_frame(frame).await {
+-                        if let WebSocketError::ConnectionClosed = err {
+-                            break;
+-                        }
+-                        warn!("Failed to send frame: {err}");
+-                    }
+-                }
+-                WsMessage::Video(data) => {
+-                    if let Err(err) = tx.write_frame(Frame::binary(data.into())).await {
+-                        if let WebSocketError::ConnectionClosed = err {
+-                            break;
+-                        }
+-                        warn!("Failed to send video frame: {err}");
+-                    }
+-                }
++            let frame = match msg {
++                WsMessage::Frame(frame) => frame,
++                WsMessage::Video(data) => Frame::binary(data.into()),
+                 WsMessage::MessageOutbound(msg) => {
+-                    let json_string = serde_json::to_string(&msg).unwrap();
+-                    let data = json_string.as_bytes();
+-                    if let Err(err) = tx.write_frame(Frame::text(data.into())).await {
+-                        if let WebSocketError::ConnectionClosed = err {
+-                            break;
+-                        }
+-                        warn!("Failed to send outbound message: {err}");
+-                    }
++                    Frame::text(serde_json::to_vec(&msg).unwrap().into())
++                }
++            };
++            // A broken pipe is terminal, not a reason to encode another frame forever.
++            // Bound writes so a silent tablet cannot leave the encoder blocked indefinitely.
++            match tokio::time::timeout(Duration::from_secs(3), tx.write_frame(frame)).await {
++                Ok(Ok(())) => {}
++                Ok(Err(err)) => {
++                    warn!("Closing video connection after websocket write failure: {err}");
++                    break;
++                }
++                Err(_) => {
++                    warn!("Closing video connection: websocket write stalled for 3 seconds");
++                    break;
+                 }
+             }
+         }
++        // Drop both channels: the client handler and its capture/encoder thread can exit.
++        receiver_outbound.close();
++        read_task.abort();
+     });
+ 
+     (
+@@ -602,3 +601,63 @@
+         },
+     )
+ }
++
++#[cfg(test)]
++mod connection_tests {
++    use super::*;
++    use std::io;
++    use std::pin::Pin;
++    use std::task::{Context, Poll};
++
++    struct BrokenWriter;
++
++    impl tokio::io::AsyncRead for BrokenWriter {
++        fn poll_read(
++            self: Pin<&mut Self>, _: &mut Context<'_>, _: &mut tokio::io::ReadBuf<'_>,
++        ) -> Poll<io::Result<()>> {
++            Poll::Pending
++        }
++    }
++
++    impl tokio::io::AsyncWrite for BrokenWriter {
++        fn poll_write(
++            self: Pin<&mut Self>, _: &mut Context<'_>, _: &[u8],
++        ) -> Poll<io::Result<usize>> {
++            Poll::Ready(Err(io::Error::new(io::ErrorKind::BrokenPipe, "tablet disconnected")))
++        }
++
++        fn poll_flush(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<io::Result<()>> {
++            Poll::Ready(Ok(()))
++        }
++
++        fn poll_shutdown(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<io::Result<()>> {
++            Poll::Ready(Ok(()))
++        }
++    }
++
++    #[tokio::test]
++    async fn broken_pipe_closes_both_channels_even_when_the_reader_is_still_waiting() {
++        let websocket = WebSocket::after_handshake(BrokenWriter, fastwebsockets::Role::Server);
++        let (sender, mut receiver) = weylus_websocket_channel(
++            websocket, Arc::new(tokio::sync::Semaphore::new(0)),
++        );
++        assert!(sender.sender.send(WsMessage::Video(vec![0; 64])).await.is_ok());
++        assert!(tokio::time::timeout(Duration::from_secs(1), receiver.recv.recv())
++            .await.expect("broken-pipe reader was not closed").is_none());
++        assert!(sender.sender.send(WsMessage::Video(vec![0])).await.is_err());
++    }
++
++    #[tokio::test]
++    async fn stalled_writer_closes_both_channels_instead_of_leaking_a_capture_thread() {
++        let (server, _silent_peer) = tokio::io::duplex(16);
++        let websocket = WebSocket::after_handshake(server, fastwebsockets::Role::Server);
++        let (sender, mut receiver) = weylus_websocket_channel(
++            websocket, Arc::new(tokio::sync::Semaphore::new(0)),
++        );
++        assert!(sender.sender.send(WsMessage::Video(vec![0; 1024])).await.is_ok());
++        // The reader has no reason to finish: only writer timeout/cleanup can close it.
++        assert!(tokio::time::timeout(Duration::from_secs(5), receiver.recv.recv())
++            .await.expect("stalled connection was not closed").is_none());
++        assert!(sender.sender.send(WsMessage::Video(vec![0])).await.is_err());
++    }
++}
+--- a/lib/encode_video.c
++++ b/lib/encode_video.c
+@@ -29,7 +29,7 @@
+ #include <va/va.h>
+ #endif
+ 
+-const AVRational TIME_BASE = (AVRational){1, 1000};
++const AVRational TIME_BASE = (AVRational){1, 90000};
+ 
+ typedef struct ScaleContext
+ {
+@@ -69,7 +69,8 @@
+ 	int height_in;
+ 	void* buf;
+ 	void* rust_ctx;
+-	int pts;
++	int64_t pts;
++	AVRational frame_rate;
+ 	int initialized;
+ 	int frame_allocated;
+ 	int try_vaapi;
+@@ -166,7 +167,7 @@
+ 	ctx->c->width = ctx->width_out;
+ 	ctx->c->height = ctx->height_out;
+ 	ctx->c->time_base = TIME_BASE;
+-	ctx->c->framerate = (AVRational){0, 1};
++	ctx->c->framerate = ctx->frame_rate;
+ 
+ 	ctx->c->gop_size = 12;
+ 	// no B-frames to reduce latency
+@@ -606,7 +607,7 @@
+ 	p->width = ctx->width_in;
+ 	p->height = ctx->height_in;
+ 	p->time_base = TIME_BASE;
+-	p->frame_rate = (AVRational){30, 1};
++	p->frame_rate = ctx->frame_rate;
+ 	p->hw_frames_ctx = av_buffer_ref(ctx->drm_frames_ctx);
+ 	ret = av_buffersrc_parameters_set(ctx->dmabuf_src, p);
+ 	av_free(p);
+@@ -984,6 +985,8 @@
+ 	}
+ 
+ 	ctx->st = avformat_new_stream(ctx->oc, NULL);
++	ctx->st->avg_frame_rate = ctx->frame_rate;
++	ctx->st->r_frame_rate = ctx->frame_rate;
+ 	avcodec_parameters_from_context(ctx->st->codecpar, ctx->c);
+ 
+ 	ctx->pkt = av_packet_alloc();
+@@ -1055,14 +1058,21 @@
+ 	free(ctx);
+ }
+ 
+-void encode_video_frame(VideoContext* ctx, int millis, Error* err)
++void encode_video_frame(VideoContext* ctx, int64_t micros, Error* err)
+ {
+ 	int ret;
+ 	AVFrame* frame = ctx->frame;
+ 	if (!frame)
+ 		ERROR(err, 1, "Frame not initialized!");
+ 
+-	frame->pts = millis;
++	// Use a 90 kHz media clock: 120 FPS needs exact 750-tick frame durations.
++	// Never overlap the preceding fragment, even when capture/clock readings burst.
++	int64_t duration = av_rescale_q(1, av_inv_q(ctx->frame_rate), TIME_BASE);
++	int64_t pts = av_rescale_q(micros, (AVRational){1, 1000000}, TIME_BASE);
++	if (ctx->pts >= 0 && pts < ctx->pts + duration)
++		pts = ctx->pts + duration;
++	frame->pts = ctx->pts = pts;
++	frame->duration = duration;
+ 
+ 	ret = avcodec_send_frame(ctx->c, frame);
+ 	if (ret < 0)
+@@ -1079,11 +1089,15 @@
+ 		}
+ 
+ 		av_packet_rescale_ts(ctx->pkt, ctx->c->time_base, ctx->st->time_base);
+-		av_write_frame(ctx->oc, ctx->pkt);
++		ret = av_write_frame(ctx->oc, ctx->pkt);
+ 		av_packet_unref(ctx->pkt);
++		if (ret < 0)
++			ERROR(err, 1, "Error writing video packet: %s", av_err2str(ret));
+ 
+ 		// new fragment on every frame for lowest latency
+-		av_write_frame(ctx->oc, NULL);
++		ret = av_write_frame(ctx->oc, NULL);
++		if (ret < 0)
++			ERROR(err, 1, "Error flushing video fragment: %s", av_err2str(ret));
+ 	}
+ }
+ 
+@@ -1093,6 +1107,7 @@
+ 	int height_in,
+ 	int width_out,
+ 	int height_out,
++	double frame_rate,
+ 	int try_vaapi,
+ 	int try_nvenc,
+ 	int try_videotoolbox,
+@@ -1105,7 +1120,8 @@
+ 	ctx->height_out = height_out - height_out % 2;
+ 	ctx->width_in = width_in;
+ 	ctx->height_in = height_in;
+-	ctx->pts = 0;
++	ctx->pts = -1;
++	ctx->frame_rate = av_d2q(frame_rate, 1000000);
+ 	ctx->initialized = 0;
+ 	ctx->frame_allocated = 0;
+ 	ctx->try_vaapi = try_vaapi;

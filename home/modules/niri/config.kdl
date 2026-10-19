@@ -55,6 +55,16 @@ output "eDP-1" {
   scale 2
 }
 
+// HDMI dummy plug streamed to the 16:10 tablet through Weylus.
+// Match its identity, not the connector, so real HDMI monitors are unaffected.
+output "PNP(BBC) HDP-V104 demoset-1" {
+  // Custom 120 Hz mode tested on this dummy plug; preserves the tablet aspect.
+  mode custom=true "1440x900@120"
+
+  // 1280x800 logical desktop, matching the laptop's usable UI size.
+  scale 1.125
+}
+
 environment {
   GDK_BACKEND "wayland"
   // GDK_SCALE "2"

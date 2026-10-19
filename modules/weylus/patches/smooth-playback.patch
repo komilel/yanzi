@@ -1,0 +1,180 @@
+--- a/ts/lib.ts
++++ b/ts/lib.ts
+@@ -929,32 +929,105 @@
+     setTimeout(() => frame_rate_stats(), 1500);
+ }
+ 
+-function catch_up_video(
+-    video: HTMLVideoElement,
+-    low_latency: boolean,
+-    state: { last_seek: number },
++interface PlaybackCatchUpState {
++    last_seek: number;
++    last_rate_change: number;
++    initialized: boolean;
++    catching_up: boolean;
++    rate_supported: boolean;
++}
++
++function create_playback_catch_up_state(): PlaybackCatchUpState {
++    return {
++        last_seek: -Infinity, last_rate_change: -Infinity,
++        initialized: false, catching_up: false, rate_supported: true,
++    };
++}
++
++function set_video_playback_rate(
++    video: HTMLVideoElement, state: PlaybackCatchUpState, rate: number,
+ ) {
+-    if (video.error || video.seeking || video.readyState < 2 || !video.buffered.length)
++    if (!state.rate_supported || video.playbackRate === rate)
+         return;
+     const now = performance.now();
+-    if (now - state.last_seek < 750)
++    // Throttle speed changes, but never delay returning to normal playback.
++    if (rate !== 1 && now - state.last_rate_change < 250)
+         return;
+-    // Use successfully appended media, not seekable (which may advertise a
+-    // much larger live timeline), and keep some data ahead of the decoder.
+-    const last_range = video.buffered.length - 1;
+-    const end = video.buffered.end(last_range);
+-    const start = video.buffered.start(last_range);
+-    const lag = end - video.currentTime;
+-    if (!isFinite(start) || !isFinite(end) || !isFinite(video.currentTime)
+-        || lag <= (low_latency ? 0.35 : 3))
+-        return;
+-    const target = Math.max(start, end - (low_latency ? 0.12 : 0.25));
+-    if (target > video.currentTime) {
+-        video.currentTime = target;
+-        state.last_seek = now;
++    state.last_rate_change = now;
++    try {
++        video.playbackRate = rate;
++    } catch (err) {
++        state.rate_supported = false;
++        state.catching_up = false;
++        try { video.playbackRate = 1; } catch (_) { }
++        log(LogLevel.WARN, "Playback-speed catch-up unavailable; using normal playback: " + err);
+     }
+ }
+ 
++function stop_video_catch_up(video: HTMLVideoElement, state: PlaybackCatchUpState) {
++    state.catching_up = false;
++    set_video_playback_rate(video, state, 1);
++}
++
++function catch_up_video(
++    video: HTMLVideoElement, low_latency: boolean, state: PlaybackCatchUpState,
++) {
++    if (video.error || video.seeking || video.paused || video.ended
++        || video.readyState < 2 || !video.buffered.length) {
++        stop_video_catch_up(video, state);
++        return;
++    }
++    // Snapshot actual appended ranges, not the potentially much larger seekable timeline.
++    const ranges = video.buffered;
++    const last_range = ranges.length - 1;
++    const start = ranges.start(last_range);
++    const end = ranges.end(last_range);
++    const current = video.currentTime;
++    if (!isFinite(start) || !isFinite(end) || !isFinite(current) || end <= start) {
++        stop_video_catch_up(video, state);
++        return;
++    }
++    const lag = end - current;
++    const startup = !state.initialized;
++    if (video.readyState >= 3)
++        state.initialized = true;
++    let playable_current_range = false;
++    for (let i = 0; i < ranges.length; i++) {
++        if (current >= ranges.start(i) - 0.01 && current < ranges.end(i) - 0.005)
++            playable_current_range = true;
++    }
++    const gap = current < start - 0.01 && !playable_current_range;
++    const recover = gap || lag > (low_latency ? 1.5 : 3)
++        || (low_latency && startup && lag > 0.5);
++    if (recover && performance.now() - state.last_seek >= 2000) {
++        // A one-off startup/discontinuity/backlog recovery, not routine catch-up.
++        const target = Math.max(start, end - (low_latency ? 0.18 : 0.25));
++        if (target > current) {
++            stop_video_catch_up(video, state);
++            video.currentTime = target;
++            state.last_seek = performance.now();
++            state.initialized = true;
++            return;
++        }
++    }
++    if (!low_latency || !state.rate_supported || video.readyState < 3
++        || !playable_current_range || lag <= 0.18) {
++        stop_video_catch_up(video, state);
++        return;
++    }
++    // Hysteresis: begin above 220 ms, end at 180 ms. Small lag changes must not
++    // continually reconfigure playback. Never flush the decoder for routine lag.
++    if (lag > 0.22)
++        state.catching_up = true;
++    if (!state.catching_up) {
++        set_video_playback_rate(video, state, 1);
++        return;
++    }
++    // Two bounded speed levels, with a separate deadband between them.
++    const rate = lag > 0.55 || (video.playbackRate > 1.02 && lag > 0.40) ? 1.05 : 1.02;
++    set_video_playback_rate(video, state, rate);
++}
++
+ function handle_messages(
+     webSocket: WebSocket,
+     video: HTMLVideoElement,
+@@ -968,11 +1041,20 @@
+     let stream_generation = 0;
+     let video_url: string = null;
+     let restart_requested = false;
+-    const seek_state = { last_seek: -Infinity };
++    const seek_state = create_playback_catch_up_state();
+     const MAX_BUFFER_LENGTH = 20;  // In seconds
++    settings.check_aggressive_seek.addEventListener("change", () => {
++        stop_video_catch_up(video, seek_state);
++        seek_state.initialized = false;
++        if (sourceBuffer != null && !restart_requested)
++            catch_up_video(video, settings.check_aggressive_seek.checked, seek_state);
++    });
++    for (const event of ["pause", "waiting", "ended"])
++        video.addEventListener(event, () => stop_video_catch_up(video, seek_state));
+     function restart_video(reason: string) {
+         if (restart_requested || webSocket.readyState != WebSocket.OPEN)
+             return;
++        stop_video_catch_up(video, seek_state);
+         restart_requested = true;
+         const seek_age = isFinite(seek_state.last_seek)
+             ? Math.round(performance.now() - seek_state.last_seek) + "ms" : "none";
+@@ -1017,7 +1099,8 @@
+                     sourceBuffer = null;
+                     queue = [];
+                     restart_requested = false;
+-                    seek_state.last_seek = -Infinity;
++                    Object.assign(seek_state, create_playback_catch_up_state());
++                    stop_video_catch_up(video, seek_state);
+                     if (previous_buffer && previous_buffer.updating && previous_source.readyState == "open") {
+                         try { previous_buffer.abort(); } catch (_) { }
+                     }
+--- a/www/templates/index.html
++++ b/www/templates/index.html
+@@ -8,7 +8,7 @@
+     <meta name="mobile-web-app-capable" content="yes">
+     <title>Weylus</title>
+     <link rel="stylesheet" href="style.css">
+-    <script src="lib.js?fix=cursor-v1"></script>
++    <script src="lib.js?fix=smooth-v3"></script>
+     <script>
+         run("{{log_level}}");
+     </script>
+@@ -40,8 +40,7 @@
+                     <input type="checkbox" id="capture_cursor" />
+                     <span>Capture Cursor</span>
+                 </label>
+-                <label><input type="checkbox" id="aggressive_seeking" checked /> <span>Lower Latency<br>(possibly
+-                        choppy)</span></label>
++                <label><input type="checkbox" id="aggressive_seeking" checked /> <span>Lower Latency<br>(smooth catch-up)</span></label>
+                 <label>Max Video Resolution: <br><input type="range" id="scale_video" min="0.1" max="2" step="0.01"
+                         value="1.8" /><output></output></label>
+                 <label>Frame Rate: <br><input type="range" id="frame_rate" value="0" /><output>30</output> fps</label>

@@ -1,0 +1,154 @@
+--- a/src/capturable/pipewire.rs
++++ b/src/capturable/pipewire.rs
+@@ -2,7 +2,7 @@
+ use std::error::Error;
+ use std::os::unix::io::AsRawFd;
+ use std::sync::{Arc, Mutex};
+-use std::time::Duration;
++use std::time::{Duration, Instant};
+ use tracing::{debug, trace, warn};
+ 
+ use dbus::{
+@@ -238,7 +238,45 @@
+     }
+ }
+ 
++struct CaptureStatistics {
++    enabled: bool,
++    started: Instant,
++    fresh: u64,
++    reused: u64,
++}
++
++impl CaptureStatistics {
++    fn new() -> Self {
++        Self {
++            enabled: std::env::var_os("WEYLUS_CAPTURE_STATS").is_some(),
++            started: Instant::now(),
++            fresh: 0,
++            reused: 0,
++        }
++    }
++
++    fn record(&mut self, fresh: bool) {
++        if !self.enabled {
++            return;
++        }
++        if fresh { self.fresh += 1; } else { self.reused += 1; }
++        let elapsed = self.started.elapsed().as_secs_f64();
++        if elapsed >= 3.0 {
++            debug!(
++                "PipeWire capture: fresh_fps={:.1} reused_fps={:.1} capture_fps={:.1}",
++                self.fresh as f64 / elapsed,
++                self.reused as f64 / elapsed,
++                (self.fresh + self.reused) as f64 / elapsed,
++            );
++            self.started = Instant::now();
++            self.fresh = 0;
++            self.reused = 0;
++        }
++    }
++}
++
+ pub struct PipeWireRecorder {
++    capture_statistics: CaptureStatistics,
+     buffer: Option<gst::MappedBuffer<gst::buffer::Readable>>,
+     buffer_cropped: Vec<u8>,
+     pix_fmt: String,
+@@ -353,6 +391,9 @@
+         let sink = gst::ElementFactory::make("appsink").build()?;
+         sink.set_property("drop", &true);
+         sink.set_property("max-buffers", &1u32);
++        // The video loop already paces capture. Do not wait on a second clock.
++        sink.set_property("sync", &false);
++        sink.set_property("enable-last-sample", &false);
+         let appsink = sink
+             .dynamic_cast::<AppSink>()
+             .map_err(|_| GStreamerError("Sink element is expected to be an appsink!".into()))?;
+@@ -478,6 +519,8 @@
+         let appsink = gst::ElementFactory::make("appsink").build()?;
+         appsink.set_property("drop", &true);
+         appsink.set_property("max-buffers", &1u32);
++        appsink.set_property("sync", &false);
++        appsink.set_property("enable-last-sample", &false);
+         let appsink = appsink
+             .dynamic_cast::<AppSink>()
+             .map_err(|_| GStreamerError("Sink element is expected to be an appsink!".into()))?;
+@@ -608,8 +651,17 @@
+         }
+     }
+ 
++    fn next_sample(&mut self) -> Option<gst::Sample> {
++        // A 16 ms wait exceeds the entire 8.3 ms frame budget at 120 FPS.
++        // Reuse the retained frame without blocking when the compositor is idle.
++        let sample = self.appsink.try_pull_sample(gst::ClockTime::from_nseconds(0));
++        self.capture_statistics.record(sample.is_some());
++        sample
++    }
++
+     fn finish(pipeline: gst::Pipeline, appsink: AppSink) -> Self {
+         Self {
++            capture_statistics: CaptureStatistics::new(),
+             pipeline,
+             appsink,
+             buffer: None,
+@@ -633,10 +685,7 @@
+         // Zero-copy path: pull a DMA_DRM dmabuf, retain the buffer (keeps the fd valid)
+         // and hand its DRM layout downstream. Reuse the previous frame if none is ready.
+         if self.is_dmabuf {
+-            if let Some(sample) = self
+-                .appsink
+-                .try_pull_sample(gst::ClockTime::from_mseconds(16))
+-            {
++            if let Some(sample) = self.next_sample() {
+                 let caps = sample
+                     .caps()
+                     .ok_or_else(|| GStreamerError("dmabuf sample has no caps".into()))?;
+@@ -694,10 +743,7 @@
+                 offset: *offset,
+             });
+         }
+-        if let Some(sample) = self
+-            .appsink
+-            .try_pull_sample(gst::ClockTime::from_mseconds(16))
+-        {
++        if let Some(sample) = self.next_sample() {
+             let cap = sample.caps().unwrap().structure(0).unwrap();
+             let w: i32 = cap.value("width")?.get()?;
+             let h: i32 = cap.value("height")?.get()?;
+@@ -1235,4 +1281,35 @@
+         let g = relative_geometry(1, None, Some((1440, 960)), Some(BOX_2688));
+         assert_eq!(rel(&g), (0.0, 0.0, 1.0, 1.0));
+     }
++
++    #[test]
++    fn capture_does_not_wait_for_future_gstreamer_timestamps() {
++        gst::init().unwrap();
++        let pipeline = gst::Pipeline::new();
++        let src = gst::ElementFactory::make("appsrc").build().unwrap()
++            .dynamic_cast::<gstreamer_app::AppSrc>().unwrap();
++        src.set_is_live(true);
++        src.set_format(gst::Format::Time);
++        src.set_caps(Some(&"video/x-raw,format=BGRx,width=1,height=1,framerate=120/1"
++            .parse::<gst::Caps>().unwrap()));
++        let sink = PipeWireRecorder::make_appsink().unwrap();
++        assert!(!sink.property::<bool>("sync"));
++        assert!(!sink.property::<bool>("enable-last-sample"));
++        let src_element = src.clone().upcast::<gst::Element>();
++        let sink_element = sink.clone().upcast::<gst::Element>();
++        pipeline.add_many([&src_element, &sink_element]).unwrap();
++        src_element.link(&sink_element).unwrap();
++        let mut recorder = PipeWireRecorder::finish(pipeline, sink);
++        recorder.pipeline.set_state(gst::State::Playing).unwrap();
++        let mut buffer = gst::Buffer::with_size(4).unwrap();
++        // This frame must be available now, not five seconds from now.
++        buffer.get_mut().unwrap().set_pts(gst::ClockTime::from_seconds(5));
++        src.push_buffer(buffer).unwrap();
++        let deadline = Instant::now() + Duration::from_millis(500);
++        loop {
++            if recorder.next_sample().is_some() { break; }
++            assert!(Instant::now() < deadline, "appsink delayed a capture frame");
++            std::thread::sleep(Duration::from_millis(1));
++        }
++    }
+ }

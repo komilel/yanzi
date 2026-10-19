@@ -7,6 +7,7 @@
 }: {
   imports = [
     ./packages.nix
+    ./weylus.nix
     ./niri.nix
     ./gtk.nix
     ./zoxide.nix

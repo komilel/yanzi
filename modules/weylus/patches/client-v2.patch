@@ -1,0 +1,212 @@
+--- a/ts/lib.ts
++++ b/ts/lib.ts
+@@ -903,6 +903,32 @@
+     setTimeout(() => frame_rate_stats(), 1500);
+ }
+ 
++function catch_up_video(
++    video: HTMLVideoElement,
++    low_latency: boolean,
++    state: { last_seek: number },
++) {
++    if (video.error || video.seeking || video.readyState < 2 || !video.buffered.length)
++        return;
++    const now = performance.now();
++    if (now - state.last_seek < 750)
++        return;
++    // Use successfully appended media, not seekable (which may advertise a
++    // much larger live timeline), and keep some data ahead of the decoder.
++    const last_range = video.buffered.length - 1;
++    const end = video.buffered.end(last_range);
++    const start = video.buffered.start(last_range);
++    const lag = end - video.currentTime;
++    if (!isFinite(start) || !isFinite(end) || !isFinite(video.currentTime)
++        || lag <= (low_latency ? 0.35 : 3))
++        return;
++    const target = Math.max(start, end - (low_latency ? 0.12 : 0.25));
++    if (target > video.currentTime) {
++        video.currentTime = target;
++        state.last_seek = now;
++    }
++}
++
+ function handle_messages(
+     webSocket: WebSocket,
+     video: HTMLVideoElement,
+@@ -913,9 +939,28 @@
+     let mediaSource: MediaSource = null;
+     let sourceBuffer: SourceBuffer = null;
+     let queue = [];
++    let stream_generation = 0;
++    let video_url: string = null;
++    let restart_requested = false;
++    const seek_state = { last_seek: -Infinity };
+     const MAX_BUFFER_LENGTH = 20;  // In seconds
++    function restart_video(reason: string) {
++        if (restart_requested || webSocket.readyState != WebSocket.OPEN)
++            return;
++        restart_requested = true;
++        const seek_age = isFinite(seek_state.last_seek)
++            ? Math.round(performance.now() - seek_state.last_seek) + "ms" : "none";
++        log(LogLevel.WARN, "Restarting video playback: " + reason
++            + " [ready=" + video.readyState + ", seeking=" + video.seeking
++            + ", last_seek=" + seek_age + ", queued=" + queue.length + "]");
++        webSocket.send('"RestartVideo"');
++    }
++    video.addEventListener("error", () => {
++        if (video.error)
++            restart_video("decoder error " + video.error.code + ": " + video.error.message);
++    });
+     function upd_buf() {
+-        if (sourceBuffer == null)
++        if (sourceBuffer == null || restart_requested)
+             return;
+         if (!sourceBuffer.updating && queue.length > 0 && mediaSource.readyState == "open") {
+             let buffer_length = 0;
+@@ -930,11 +975,7 @@
+                 try {
+                     sourceBuffer.appendBuffer(queue.shift());
+                 } catch (err) {
+-                    log(LogLevel.DEBUG, "Error appending to sourceBuffer:" + err);
+-                    // Drop everything, and try to pick up the stream again
+-                    if (sourceBuffer.updating)
+-                        sourceBuffer.abort();
+-                    sourceBuffer.remove(0, Infinity);
++                    restart_video("appendBuffer failed: " + err);
+                 }
+             }
+         }
+@@ -944,19 +985,47 @@
+             let msg = JSON.parse(event.data);
+             if (typeof msg == "string") {
+                 if (msg == "NewVideo") {
+-                    let MS = window.ManagedMediaSource ? window.ManagedMediaSource : window.MediaSource;
+-                    mediaSource = new MS();
++                    const generation = ++stream_generation;
++                    const previous_buffer = sourceBuffer;
++                    const previous_source = mediaSource;
+                     sourceBuffer = null;
+-                    video.src = URL.createObjectURL(mediaSource);
+-                    mediaSource.addEventListener("sourceopen", (_) => {
++                    queue = [];
++                    restart_requested = false;
++                    seek_state.last_seek = -Infinity;
++                    if (previous_buffer && previous_buffer.updating && previous_source.readyState == "open") {
++                        try { previous_buffer.abort(); } catch (_) { }
++                    }
++                    let MS = window.ManagedMediaSource ? window.ManagedMediaSource : window.MediaSource;
++                    const new_source: MediaSource = new MS();
++                    mediaSource = new_source;
++                    const previous_url = video_url;
++                    video_url = URL.createObjectURL(new_source);
++                    video.src = video_url;
++                    if (previous_url)
++                        URL.revokeObjectURL(previous_url);
++                    new_source.addEventListener("sourceopen", (_) => {
++                        if (generation != stream_generation)
++                            return;
+                         let mimeType = 'video/mp4; codecs="avc1.4D403D"';
+                         if (!MS.isTypeSupported(mimeType))
+                             mimeType = "video/mp4";
+-                        sourceBuffer = mediaSource.addSourceBuffer(mimeType);
+-                        sourceBuffer.addEventListener("updateend", upd_buf);
+-                        // try to recover from errors by restarting the video
+-                        if (sourceBuffer.onerror)
+-                            sourceBuffer.onerror = () => settings.send_server_config();
++                        try {
++                            const new_buffer = new_source.addSourceBuffer(mimeType);
++                            sourceBuffer = new_buffer;
++                            new_buffer.addEventListener("updateend", () => {
++                                if (generation != stream_generation || restart_requested)
++                                    return;
++                                catch_up_video(video, settings.check_aggressive_seek.checked, seek_state);
++                                upd_buf();
++                            });
++                            new_buffer.addEventListener("error", () => {
++                                if (generation == stream_generation)
++                                    restart_video("SourceBuffer rejected a video fragment");
++                            });
++                            upd_buf();
++                        } catch (err) {
++                            restart_video("SourceBuffer initialization failed: " + err);
++                        }
+                     })
+                 } else if (msg == "ConfigOk") {
+                     onConfigOk();
+@@ -978,24 +1047,13 @@
+             return;
+         }
+ 
+-        // not a string -> got a video frame
++        // Receiving FPS is independent of successful browser decoding.
++        frame_count += 1;
++        if (restart_requested)
++            return;
+         queue.push(event.data);
+         upd_buf();
+-        frame_count += 1;
+-
+-        // only seek if there is data available, some browsers choke otherwise
+-        if (video.seekable.length > 0) {
+-            let seek_time = video.seekable.end(video.seekable.length - 1);
+-            if (video.readyState >= (settings.check_aggressive_seek.checked ? 3 : 4)
+-                // but make sure to catch up if the video is more than 3 seconds behind
+-                || seek_time - video.currentTime > 3) {
+-                if (isFinite(seek_time))
+-                    video.currentTime = seek_time;
+-                else
+-                    log(LogLevel.WARN, "Failed to seek to end of video.")
+-            }
+-
+-        }
++        // Catch-up runs on updateend, only after this data has been appended.
+     }
+ }
+ 
+@@ -1022,6 +1080,14 @@
+     }
+ }
+ 
++function resize_video_viewport(canvas: HTMLCanvasElement) {
++    stretch_video();
++    canvas.width = window.innerWidth * window.devicePixelRatio;
++    canvas.height = window.innerHeight * window.devicePixelRatio;
++    // Fullscreen/orientation changes only affect local presentation. Sending
++    // Config here would restart capture and the encoder, and invalidate MSE.
++}
++
+ function init() {
+     check_apis();
+ 
+@@ -1074,14 +1140,12 @@
+     }
+     webSocket.onerror = () => handle_disconnect("Lost connection.");
+     webSocket.onclose = () => handle_disconnect("Connection closed.");
+-    window.onresize = () => {
+-        stretch_video();
+-        canvas.width = window.innerWidth * window.devicePixelRatio;
+-        canvas.height = window.innerHeight * window.devicePixelRatio;
+-        let [w, h] = calc_max_video_resolution(settings.scale_video_input.valueAsNumber);
+-        settings.scale_video_output.value = w + "x" + h;
+-        settings.send_server_config();
+-    }
++    window.onresize = () => resize_video_viewport(canvas);
++    document.addEventListener("fullscreenchange", () => {
++        resize_video_viewport(canvas);
++        if (check_video.checked && !video.error)
++            video.play().catch(err => log(LogLevel.WARN, "Fullscreen playback failed: " + err));
++    });
+     video.controls = false;
+     video.disableRemotePlayback = true;
+     video.onloadeddata = () => stretch_video();
+--- a/www/templates/index.html
++++ b/www/templates/index.html
+@@ -8,7 +8,7 @@
+     <meta name="mobile-web-app-capable" content="yes">
+     <title>Weylus</title>
+     <link rel="stylesheet" href="style.css">
+-    <script src="lib.js"></script>
++    <script src="lib.js?fix=seek-v2"></script>
+     <script>
+         run("{{log_level}}");
+     </script>
