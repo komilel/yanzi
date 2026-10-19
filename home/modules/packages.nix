@@ -86,7 +86,8 @@ in {
       unzip
       jq
       pandoc
-      texliveSmall
+      # Broad LaTeX package coverage, PDF engines, latexmk and bibliography tools.
+      texliveFull
       qrencode
       sops
       age
