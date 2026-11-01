@@ -390,7 +390,7 @@ binds {
   // Core Noctalia binds
   Mod+A { spawn-sh "noctalia msg panel-toggle control-center"; }
   Mod+Slash { spawn-sh "noctalia msg settings-toggle"; }
-  Alt+Tab { spawn-sh "noctalia msg window-switcher"; }
+  Mod+N hotkey-overlay-title="Toggle Notes" repeat=false { spawn "noctalia" "msg" "panel-toggle" "noctalia/notes:panel"; }
 
   // Wallpaper keybinds
   Mod+Alt+W { spawn-sh "noctalia msg wallpaper-random"; }
@@ -638,7 +638,7 @@ binds {
 
   // Powers off the monitors. To turn them back on, do any input like
   // moving the mouse or pressing any other key.
-  Mod+Shift+P allow-inhibiting=false { power-off-monitors; }
+  XF86Assistant allow-inhibiting=false { power-off-monitors; }
 
   // Dynamic cast target
   // Mod+A { set-dynamic-cast-window; }

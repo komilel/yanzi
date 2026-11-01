@@ -56,6 +56,7 @@ in {
       wechat
       gnome-sound-recorder
       anki-bin
+      chatgpt
 
       # Desktop utilities
       wl-clipboard
